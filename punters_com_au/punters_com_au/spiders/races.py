@@ -3,7 +3,7 @@ from pathlib import Path
 import scrapy
 import pandas as pd
 from bs4 import BeautifulSoup
-
+import re
 
 class RacesSpider(scrapy.Spider):
     name = 'races'
@@ -24,6 +24,18 @@ class RacesSpider(scrapy.Spider):
         html_content = response.body
         df = extract_table_to_df(html_content)
         # For demonstration purposes, print the first 5 rows
+        
+        pattern = r'https:\/\/www\.punters\.com\.au\/form-guide\/(?P<place>[\w-]+)_(?P<id>\d+)'
+
+        match = re.search(pattern, response.url)
+        if match:
+            place = match.group('place')
+            id_ = match.group('id')
+            print(f"place={place}")
+            print(f"id={id_}")
+        else:
+            print("Pattern not found in the provided URL.")
+        
         print ("=====================")
         print(f"URL: {response.url}")
         print(df)
