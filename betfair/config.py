@@ -1,3 +1,5 @@
+"""Connection routines"""
+
 import betfairlightweight
 
 APP_KEY = "mECg2P2ohk92MLXy"

@@ -1,3 +1,5 @@
+"""Scraping of punters.com.au"""
+
 from pathlib import Path
 
 import scrapy
@@ -35,7 +37,7 @@ class RacesSpider(scrapy.Spider):
             print(f"id={id_}")
         else:
             print("Pattern not found in the provided URL.")
-        
+
         print ("=====================")
         print(f"URL: {response.url}")
         print(df)

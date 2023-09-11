@@ -174,13 +174,14 @@ const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overru
     );
 };
 const MAX_RETRIES = 5;
+const API_URL = import.meta.env.VITE_REACT_APP_API_URL || '3.24.169.161:8010';
 
 const DataStream2: React.FC = () => {
     const [raceData, setRaceData] = useState<RaceData[]>([]);
     let retryCount = 0;
 
     const connectSocket = () => {
-        const socket = new WebSocket("ws://localhost:8010/ff_cache");
+        const socket = new WebSocket(`ws://${API_URL}/ff_cache`);
 
         socket.onmessage = (event) => {
             const rawData = JSON.parse(event.data);
