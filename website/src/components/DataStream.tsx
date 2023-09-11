@@ -174,7 +174,7 @@ const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overru
     );
 };
 const MAX_RETRIES = 5;
-const API_URL = import.meta.env.VITE_REACT_APP_API_URL || '3.24.169.161:8010';
+const API_URL = import.meta.env.VITE_REACT_APP_API_URL || '3.24.169.161:7777';
 
 const DataStream2: React.FC = () => {
     const [raceData, setRaceData] = useState<RaceData[]>([]);

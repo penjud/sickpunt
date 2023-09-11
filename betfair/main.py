@@ -152,4 +152,4 @@ if __name__ == '__main__':
     )
 
     threading.Thread(target=betfair_socket.start).start()
-    uvicorn.run(app, host="0.0.0.0", port=8010)
+    uvicorn.run(app, host="0.0.0.0", port=7777)
