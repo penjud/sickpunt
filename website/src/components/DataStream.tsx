@@ -12,8 +12,22 @@ interface HorseData {
         _back_moving_avg: number;
         _lay_moving_avg: number;
         _last_moving_avg: number;
-        _last_min: number;       // New field
-        _last_max: number;       // New field
+        _last_min: number;
+        _last_max: number;
+        _runner_name: string;
+        _horse_info: {
+            'Horse Name': string;
+            'Avg $': string;
+            'Bar': string;
+            'Career': string;
+            'Last 10': string;
+            'Number': string;
+            'Odds': string;
+            'P%': string;
+            'Rtg': string;
+            'W%': string;
+            'Wgt': string;
+        };
     }
 }
 
@@ -32,14 +46,28 @@ const CustomTooltip = ({ active, payload, label }) => {
 
         return (
             <div className="custom-tooltip">
+                <p className="intro">{`Horse Name: ${selectedData._horse_name}`}</p>
+                <p className="intro">{`Horse ID: ${selectedData.horseId}`}</p>
                 <p className="intro">{`Last Min: ${(1 / selectedData._last_min)?.toFixed(2)}`}</p>
                 <p className="intro">{`Last: ${(1 / selectedData.last)?.toFixed(2)}`}</p>
                 <p className="intro">{`Last Max: ${(1 / selectedData._last_max)?.toFixed(2)}`}</p>
+                
+                {selectedData._horse_info && (
+                    <table border="1">
+                        {Object.entries(selectedData._horse_info).map(([key, value]) => (
+                            <tr key={key}>
+                                <td>{key}</td>
+                                <td>{value}</td>
+                            </tr>
+                        ))}
+                    </table>
+                )}
             </div>
         );
     }
     return null;
 };
+
 
 const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overrunLay, overrunLast, secondsToStart }) => {
     const [linesVisibility, setLinesVisibility] = useState({
@@ -62,36 +90,36 @@ const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overru
 
     function OverrunComponent({ overrunBack, overrunLay, overrunLast }) {
         const [isHighlighted, setIsHighlighted] = useState(false);
-    
+
         useEffect(() => {
             let timer;
-        
+
             if (overrunLay > 1 || overrunBack < 1) {
-              setIsHighlighted(true);
-              timer = setTimeout(() => {
-                setIsHighlighted(false);
-              }, 1000); 
+                setIsHighlighted(true);
+                timer = setTimeout(() => {
+                    setIsHighlighted(false);
+                }, 1000);
             }
-        
+
             return () => {
-              if (timer) {
-                clearTimeout(timer);
-              }
+                if (timer) {
+                    clearTimeout(timer);
+                }
             };
-          }, [overrunLay]);
-          
+        }, [overrunLay]);
+
         return (
-          <p style={{ background: isHighlighted ? 'red' : 'transparent' }}>
-            Overruns (bk/ly/lt) {overrunBack.toFixed(2)}
-            /{overrunLay.toFixed(2)}
-            / {overrunLast.toFixed(2)}
-          </p>
+            <p style={{ background: isHighlighted ? 'red' : 'transparent' }}>
+                Overruns (bk/ly/lt) {overrunBack.toFixed(2)}
+                /{overrunLay.toFixed(2)}
+                / {overrunLast.toFixed(2)}
+            </p>
         );
-      }
+    }
 
 
 
-      const horseDataWithOdds = horseData.map((horse) => ({
+    const horseDataWithOdds = horseData.map((horse) => ({
         horseId: horse.horseId,
         data: {
             back: horse.data.back ? 1 / horse.data.back : null,
@@ -102,11 +130,13 @@ const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overru
             _back_moving_avg: horse.data._back_moving_avg ? 1 / horse.data._back_moving_avg : null,
             _lay_moving_avg: horse.data._lay_moving_avg ? 1 / horse.data._lay_moving_avg : null,
             _last_moving_avg: horse.data._last_moving_avg ? 1 / horse.data._last_moving_avg : null,
-            _last_min: horse.data._last_min ? 1 / horse.data._last_min : null,  
-            _last_max: horse.data._last_max ? 1 / horse.data._last_max : null,  
+            _last_min: horse.data._last_min ? 1 / horse.data._last_min : null,
+            _last_max: horse.data._last_max ? 1 / horse.data._last_max : null,
+            _horse_name: horse.data._runner_name,
+            _horse_info: horse.data._horse_info,
         },
     }));
-    
+
 
     const chartHeight = 400;
 
@@ -173,7 +203,7 @@ const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overru
         </div>
     );
 };
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 10;
 const API_URL = import.meta.env.VITE_REACT_APP_API_URL || '3.24.169.161:7777';
 
 const DataStream2: React.FC = () => {
@@ -185,6 +215,7 @@ const DataStream2: React.FC = () => {
 
         socket.onmessage = (event) => {
             const rawData = JSON.parse(event.data);
+            console.log("WebSocket Data:", rawData);
             let formattedData: RaceData[] = Object.entries(rawData.ff_cache).map(([raceId, horses]) => {
                 let horseData: HorseData[] = Object.entries(horses)
                     .filter(([key]) => !key.startsWith('_'))
@@ -201,6 +232,8 @@ const DataStream2: React.FC = () => {
                             _last_moving_avg: data._last_moving_avg,
                             _last_min: data._last_min,
                             _last_max: data._last_max,
+                            _runner_name: data._runner_name,
+                            _horse_info: data._horse_info || {},
                         },
                     }));
 

@@ -11,30 +11,10 @@ import uvicorn
 from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
 from fastapi import FastAPI, WebSocket
-from pymongo import MongoClient
 
-from betfair.config import client
+from betfair.betfair_metadata import get_current_event_metadata
+from betfair.config import COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client
 from betfair.horse_racing_listener import HorseRaceListener
-
-# constants
-COUNTRIES = ['AU']
-MARKET_TYPES = ['WIN']
-EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
-
-SECS_MARKET_FETCH_INTERVAL = 60
-
-HOSTNAME = '3.24.169.161'
-MONGO_USERNAME = "admin"
-MONGO_PASSWROD = "sickpunt123"
-MONGO_DB = "horse_racing"  # The database you want to connect to
-MONGO_AUTH_DB = "admin"  # Database where the user is authenticated
-connection_string = (f"mongodb://{MONGO_USERNAME}:{MONGO_PASSWROD}@{HOSTNAME}:27017/{MONGO_DB}"
-                     f"?authSource={MONGO_AUTH_DB}")
-
-mongo_client = MongoClient(connection_string)
-mongo_db = mongo_client["horse_racing"]
-tickdata_collection = mongo_db["tickdata"]
-metadata_collection = mongo_db["metadata"]
 
 app = FastAPI()
 race_data_available = asyncio.Event()
@@ -71,70 +51,21 @@ async def last_prices(websocket: WebSocket):
         await asyncio.sleep(.1)
 
 
-def get_current_event_metadata():
-    while True:  # Repeat indefinitely
-        # Get the current time and the time 60 minutes from now
-        now = datetime.utcnow()
-        end_time = now + timedelta(days=1)
-        race_datas = []
-
-        # Define the filter for the races
-        market_filter = {
-            'eventTypeIds': EVENT_TYPE_IDS,  # Horse Racing event type ID
-            'marketStartTime': {
-                'from': (now - timedelta(minutes=10)).isoformat(),
-                'to': end_time.isoformat()
-            },
-            'market_types': MARKET_TYPES,
-            'marketCountries': COUNTRIES  # UK and IE market countries
-        }
-
-        # Retrieve the list of races
-        races = client.betting.list_market_catalogue(
-            filter=market_filter,
-            max_results=25,
-            market_projection=[
-                'EVENT', 'RUNNER_DESCRIPTION', 'MARKET_START_TIME']
-        )
-
-        # Update the shared dict of market data
-        # Update the shared list of market data
-        for race in races:
-            race_data = json.loads(race.json())
-            race_datas.append(race_data)
-            race_ids.add(race_data['marketId'])
-            race_dict[race_data['marketId']] = {'start_time': datetime.fromisoformat(
-                race_data['marketStartTime']).replace(tzinfo=pytz.utc), 'runners': race_data['runners']}
-
-            race_data_available.set()
-
-        print(race_datas)
-        upsert_event_metadata(race_datas)
-        time.sleep(SECS_MARKET_FETCH_INTERVAL)
-
-
-def upsert_event_metadata(race_data):
-    # upsert the market data into the MongoDB collection
-    for race in race_data:
-        # use upsert=True to avoid duplicates
-        metadata_collection.update_one(
-            {'market_id': race['marketId']},
-            {
-                '$set': race
-            },
-            upsert=True,
-        )
-
-
 if __name__ == '__main__':
     race_ids = set()
     race_dict = dict()
+    punters_com_au = dict()
+    horse_info_dict = dict()
+    runnerid_name_dict = dict()
     ff_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     last_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
-    threading.Thread(target=get_current_event_metadata, daemon=True).start()
-
-    betfair_socket = client.streaming.create_stream(listener=
-                                                    HorseRaceListener(ff_cache, race_ids, last_cache, race_dict))
+    threading.Thread(target=lambda: get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict),
+                     daemon=True).start()
+    time.sleep(10)
+    betfair_socket = client.streaming.create_stream(
+        listener=HorseRaceListener(
+            ff_cache, race_ids, last_cache, race_dict, punters_com_au, horse_info_dict, runnerid_name_dict)
+    )
 
     market_filter = streaming_market_filter(
         event_type_ids=EVENT_TYPE_IDS,

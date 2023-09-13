@@ -1,11 +1,13 @@
 """Scraping of punters.com.au"""
 
+import re
 from pathlib import Path
 
-import scrapy
 import pandas as pd
+import scrapy
 from bs4 import BeautifulSoup
-import re
+from scrapy.crawler import CrawlerProcess
+from betfair.config import punters_com_au_collection
 
 class RacesSpider(scrapy.Spider):
     name = 'races'
@@ -25,7 +27,6 @@ class RacesSpider(scrapy.Spider):
     def parse_next_page(self, response):
         html_content = response.body
         df = extract_table_to_df(html_content)
-        # For demonstration purposes, print the first 5 rows
         
         pattern = r'https:\/\/www\.punters\.com\.au\/form-guide\/(?P<place>[\w-]+)_(?P<id>\d+)'
 
@@ -37,11 +38,19 @@ class RacesSpider(scrapy.Spider):
             print(f"id={id_}")
         else:
             print("Pattern not found in the provided URL.")
+        
+        # Extract the title
+        soup = BeautifulSoup(response.text, 'html.parser')
+        race_name = soup.title.string
 
-        print ("=====================")
+        print("=====================")
         print(f"URL: {response.url}")
         print(df)
-        print ("=====================")
+        for _, row in df.iterrows():
+            horse_name = row['Horse Name']
+            punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
+
+        print("=====================")
 
 
 def extract_table_to_df(html):
@@ -70,7 +79,6 @@ def extract_table_to_df(html):
         ppodds_span = cells[10].find('span', class_='ppodds')
         odds = ppodds_span.text.strip() if ppodds_span else 'N/A'
 
-
         data.append([horse_number, horse_name, last_10, career, rtg,
                     win_percent, placing_percent, avg_prize, wgt, bar, odds])
 
@@ -79,3 +87,14 @@ def extract_table_to_df(html):
                       'Career', 'Rtg', 'W%', 'P%', 'Avg $', 'Wgt', 'Bar', 'Odds'])
 
     return df
+
+
+if __name__ == "__main__":
+    process = CrawlerProcess(settings={
+        'FEEDS': {
+            'items.json': {'format': 'json'},
+        }
+    })
+
+    process.crawl(RacesSpider)
+    process.start()

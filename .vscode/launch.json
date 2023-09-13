@@ -12,6 +12,15 @@
             "console": "integratedTerminal",
             "env": {"PYTHONPATH": "${workspaceFolder}${pathSeparator}${env:PYTHONPATH}"},
             "justMyCode": true
+        },
+        {
+            "name": "Scrapy",
+            "type": "python",
+            "request": "launch",
+            "program": "punters_com_au/punters_com_au/spiders/races.py",
+            "console": "integratedTerminal",
+            "env": {"PYTHONPATH": "${workspaceFolder}${pathSeparator}${env:PYTHONPATH}"},
+            "justMyCode": true
         }
     ]
 }
