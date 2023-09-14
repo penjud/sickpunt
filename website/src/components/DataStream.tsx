@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
-
+import '../App.css';
 interface HorseData {
     horseId: string;
     data: {
@@ -46,14 +46,14 @@ const CustomTooltip = ({ active, payload, label }) => {
 
         return (
             <div className="custom-tooltip">
-                <p className="intro">{`Horse Name: ${selectedData._horse_name}`}</p>
+                <div>  {`Horse Name: ${selectedData._horse_name}`}</div>
                 {/* <p className="intro">{`Horse ID: ${selectedData.horseId}`}</p> */}
-                <p className="intro">{`Last Min: ${(1 / selectedData._last_min)?.toFixed(2)}`}</p>
-                <p className="intro">{`Last: ${(1 / selectedData.last)?.toFixed(2)}`}</p>
-                <p className="intro">{`Last Max: ${(1 / selectedData._last_max)?.toFixed(2)}`}</p>
-                
+                <div>  {`Last Min: ${(1 / selectedData._last_min)?.toFixed(2)}`}</div>
+                <div> {`Last: ${(1 / selectedData.last)?.toFixed(2)}`}</div>
+                <div> {`Last Max: ${(1 / selectedData._last_max)?.toFixed(2)}`}</div>
+
                 {selectedData._horse_info && (
-                    <table border="1">
+                    <table className="tooltip-table">
                         {Object.entries(selectedData._horse_info).map(([key, value]) => (
                             <tr key={key}>
                                 <td>{key}</td>

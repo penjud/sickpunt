@@ -1,15 +1,18 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import ReactGA from 'react-ga'
+import { BrowserRouter } from "react-router-dom"
 import './App.css'
-import DataStream from './components/DataStream'
+import NavBar from './routes/NavBar'
+import Routing from "./routes/Routing"
+import { useEffect } from 'react'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
-      <DataStream/>
+      <BrowserRouter>
+        <NavBar />
+        <Routing />
+      </BrowserRouter>
     </>
   )
 }
