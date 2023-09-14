@@ -1,6 +1,7 @@
 import asyncio
 import collections
 import json
+import logging
 import threading
 import time
 from collections import defaultdict
@@ -8,9 +9,10 @@ from datetime import datetime, timedelta
 
 import pytz
 import uvicorn
+import websockets
 from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from betfair.betfair_metadata import get_current_event_metadata
 from betfair.config import COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client
@@ -19,35 +21,59 @@ from betfair.horse_racing_listener import HorseRaceListener
 app = FastAPI()
 race_data_available = asyncio.Event()
 
+log = logging.getLogger(__name__)
+
 
 @app.websocket("/race_updates")
 async def race_updates(websocket: WebSocket):
+    """
+    Sends a JSON message containing the list of race IDs to the client
+    whenever the `race_data_available` event is set.
+
+    :param websocket: WebSocket connection object
+    """
     await websocket.accept()
     while True:
         await race_data_available.wait()
-        await websocket.send_json({"race_ids": list(race_ids)})
+        try:
+            await websocket.send_json({"race_ids": list(race_ids)})
+        except WebSocketDisconnect:
+            log.warning("Client disconnected")
         await asyncio.sleep(1)
 
 
 @app.websocket("/ff_cache")
 async def last_prices(websocket: WebSocket):
+    """
+    Sends a JSON message containing the last prices to the client
+    whenever the `race_data_available` event is set.
+
+    :param websocket: WebSocket connection object
+    """
     await websocket.accept()
     while True:
         await race_data_available.wait()
 
         def convert_deque(data):
+            """
+            Converts deque objects to lists and recursively converts nested deques and dicts.
+
+            :param data: Deque or dict object
+            :return: Converted list or dict object
+            """
             if isinstance(data, collections.deque):
                 return list(data)
             elif isinstance(data, dict):
                 return {k: convert_deque(v) for k, v in data.items()}
-            elif isinstance(data, list):
-                return [convert_deque(v) for v in data]
             else:
                 return data
 
         # Before sending the data
         converted_ff_cache = convert_deque(ff_cache)
-        await websocket.send_json({"ff_cache": dict(converted_ff_cache)})
+        try:
+            await websocket.send_json({"ff_cache": dict(converted_ff_cache)})
+        except websockets.exceptions.ConnectionClosedOK:
+            break
         await asyncio.sleep(.1)
 
 
