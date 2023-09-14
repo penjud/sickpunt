@@ -37,7 +37,8 @@ class HorseRaceListener(StreamListener):
                 for runner_change in market_change.get('rc', []):
                     runner_id = str(runner_change.get('id'))
                     runner_name = self.runnerid_name_dict.get(int(runner_id))
-                    runner_name=re.sub(r'^\d+\.\s+', '', runner_name)
+                    if runner_name:
+                        runner_name=re.sub(r'^\d+\.\s+', '', runner_name)
                    # Initialize deques if they don't exist
                     if not '_back_values' in self.ff_cache[market_id][runner_id]:
                         self.ff_cache[market_id][runner_id]['_back_values'] = deque(maxlen=1000)

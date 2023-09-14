@@ -47,7 +47,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         return (
             <div className="custom-tooltip">
                 <p className="intro">{`Horse Name: ${selectedData._horse_name}`}</p>
-                <p className="intro">{`Horse ID: ${selectedData.horseId}`}</p>
+                {/* <p className="intro">{`Horse ID: ${selectedData.horseId}`}</p> */}
                 <p className="intro">{`Last Min: ${(1 / selectedData._last_min)?.toFixed(2)}`}</p>
                 <p className="intro">{`Last: ${(1 / selectedData.last)?.toFixed(2)}`}</p>
                 <p className="intro">{`Last Max: ${(1 / selectedData._last_max)?.toFixed(2)}`}</p>
@@ -203,7 +203,7 @@ const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overru
         </div>
     );
 };
-const MAX_RETRIES = 10;
+const MAX_RETRIES = 9999;
 const API_URL = import.meta.env.VITE_REACT_APP_API_URL || '3.24.169.161:7777';
 
 const DataStream2: React.FC = () => {
@@ -215,7 +215,7 @@ const DataStream2: React.FC = () => {
 
         socket.onmessage = (event) => {
             const rawData = JSON.parse(event.data);
-            console.log("WebSocket Data:", rawData);
+            // console.log("WebSocket Data:", rawData);
             let formattedData: RaceData[] = Object.entries(rawData.ff_cache).map(([raceId, horses]) => {
                 let horseData: HorseData[] = Object.entries(horses)
                     .filter(([key]) => !key.startsWith('_'))
