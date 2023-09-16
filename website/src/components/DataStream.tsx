@@ -139,12 +139,18 @@ const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overru
 
 
     const chartHeight = 400;
+    let totalSeconds = -secondsToStart.toFixed(0);
+    let hours = Math.floor(totalSeconds / 3600);
+    let minutes = Math.abs(Math.floor((totalSeconds % 3600) / 60));
+    let seconds = Math.abs(totalSeconds % 60);
 
     return (
         <div>
-            <h2>Race {raceId}</h2>
+            <div className="raceTitle">Race {raceId}</div>
             <OverrunComponent overrunBack={overrunBack} overrunLay={overrunLay} overrunLast={overrunLast} />
-            <p>Seconds to start: {secondsToStart.toFixed(0)}</p>
+            <p>
+                {hours}h {minutes}m {seconds}s
+            </p>
             <div>
                 <input type="checkbox" id="back" checked={linesVisibility.back} onChange={() => toggleLineVisibility('back')} />
                 <label htmlFor="back">Back</label>
@@ -288,7 +294,7 @@ const DataStream2: React.FC = () => {
 
     return (
         <div>
-            <h1>Races</h1>
+            <div className="h1">Races</div>
             {raceData.map((race) => (
                 <RaceChart
                     key={race.raceId}

@@ -14,9 +14,9 @@ from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-from betfair.betfair_metadata import get_current_event_metadata
+from betfair.metadata import get_current_event_metadata
 from betfair.config import COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client
-from betfair.horse_racing_listener import HorseRaceListener
+from betfair.streamer import HorseRaceListener
 
 app = FastAPI()
 race_data_available = asyncio.Event()

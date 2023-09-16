@@ -145,7 +145,7 @@ class HorseRaceListener(StreamListener):
                         'cumulative_volume': self.ff_cache[market_id][runner_id]['volume'] if self.ff_cache[market_id][runner_id]['volume'] else None,
                         # 'forward_fills': self.ff_cache[market_id],
                     }
-                    # print (flattened_data)
+                    print (flattened_data)
                     # if data.get('clk') != 'AAAAAAAA' and SECS_MAX_RACE_DURATION > flattened_data['meta']['secs_to_start'] > -SECS_TO_START_FILTER:
                     #     print(flattened_data)
                     if SAVE_TICKDATA_TO_MONGO:

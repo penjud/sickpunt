@@ -37,14 +37,19 @@ def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_i
 
         # Update the shared dict of market data
         # Update the shared list of market data
+        current_races = set()
         for race in races:
             race_data = json.loads(race.json())
             race_datas.append(race_data)
             race_ids.add(race_data['marketId'])
+            current_races.add(race_data['marketId'])
             race_dict[race_data['marketId']] = {'start_time': datetime.fromisoformat(
                 race_data['marketStartTime']).replace(tzinfo=pytz.utc), 'runners': race_data['runners']}
 
             race_data_available.set()
+        
+        # remove all elements in race_ids that are not in current_races
+        race_ids.intersection_update(current_races)
 
         # print(race_datas)
         upsert_event_metadata(race_datas)

@@ -151,3 +151,15 @@
 .tooltip-table tr td:last-child {
   border-right: none;
 }
+
+.h1 {
+  padding-top: 1em;
+  font-size: 1.5em;
+  margin: 0.67em 0;
+}
+
+.raceTitle {
+  padding-top: 1em;
+  font-size: 1.5em;
+  margin: 0.83em 0;
+}
