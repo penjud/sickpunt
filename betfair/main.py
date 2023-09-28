@@ -74,7 +74,7 @@ async def last_prices(websocket: WebSocket):
             await websocket.send_json({"ff_cache": dict(converted_ff_cache)})
         except websockets.exceptions.ConnectionClosedOK:
             break
-        await asyncio.sleep(.1)
+        await asyncio.sleep(1)
 
 
 if __name__ == '__main__':

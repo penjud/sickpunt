@@ -7,6 +7,10 @@ import pytz
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,
                             SECS_MARKET_FETCH_INTERVAL, client,
                             punters_com_au_collection, upsert_event_metadata)
+import logging
+
+log=logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict):

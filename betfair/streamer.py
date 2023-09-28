@@ -8,6 +8,10 @@ import pytz
 from betfairlightweight import StreamListener
 
 from betfair.config import tickdata_collection
+import logging
+
+log=logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 MINS_TO_START_FILTER = 60
 MINS_MAX_RACE_DURATION = 60
@@ -145,7 +149,8 @@ class HorseRaceListener(StreamListener):
                         'cumulative_volume': self.ff_cache[market_id][runner_id]['volume'] if self.ff_cache[market_id][runner_id]['volume'] else None,
                         # 'forward_fills': self.ff_cache[market_id],
                     }
-                    print (flattened_data)
+                    races_len = len(flattened_data)
+                    log.info (f"Total amount of current streams {races_len}")
                     # if data.get('clk') != 'AAAAAAAA' and SECS_MAX_RACE_DURATION > flattened_data['meta']['secs_to_start'] > -SECS_TO_START_FILTER:
                     #     print(flattened_data)
                     if SAVE_TICKDATA_TO_MONGO:
