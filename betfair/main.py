@@ -13,13 +13,22 @@ import websockets
 from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 
-from betfair.config import COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client
+from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client,
+                            orders_collection)
 from betfair.metadata import get_current_event_metadata
 from betfair.strategy import Strateegy1
 from betfair.streamer import HorseRaceListener
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You might want to be more specific in production.
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 race_data_available = asyncio.Event()
 
 log = logging.getLogger(__name__)
@@ -41,6 +50,16 @@ async def race_updates(websocket: WebSocket):
         except WebSocketDisconnect:
             log.warning("Client disconnected")
         await asyncio.sleep(1)
+
+
+@app.post("/orders")
+async def get_orders():
+    """
+    Returns the contents of the `orders_collection` in MongoDB.
+
+    :return: List of orders
+    """
+    return list(orders_collection.find({}, {'_id': False}))
 
 
 @app.websocket("/ff_cache")
@@ -91,20 +110,21 @@ if __name__ == '__main__':
     punters_com_au = dict()
     horse_info_dict = dict()
     runnerid_name_dict = dict()
+    orders = dict()
     ff_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     last_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     threading.Thread(target=lambda: get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict),
                      daemon=True).start()
 
-    def check_strategy(last_cache, ff_cache):
+    def check_strategy(last_cache, ff_cache, orders):
         while True:
-            strategy.check_modify(last_cache, ff_cache)
-            strategy.check_execute(last_cache, ff_cache)
+            strategy.check_modify(last_cache, ff_cache, orders)
+            strategy.check_execute(last_cache, ff_cache, orders)
             time.sleep(1)
 
     # create a new thread and start it
     t = threading.Thread(target=check_strategy, args=(
-        last_cache, ff_cache))
+        last_cache, ff_cache, orders))
     t.start()
 
     time.sleep(10)

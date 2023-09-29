@@ -25,7 +25,7 @@ mongo_db = mongo_client["horse_racing"]
 metadata_collection = mongo_db["metadata"]
 punters_com_au_collection = mongo_db["punters_com_au"]
 tickdata_collection = mongo_db["tickdata"]
-
+orders_collection = mongo_db["orders"]
 
 # constants
 COUNTRIES = ['UK', 'AU']
@@ -33,7 +33,6 @@ MARKET_TYPES = ['WIN']
 EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
 
 SECS_MARKET_FETCH_INTERVAL = 60
-
 
 def upsert_event_metadata(race_data):
     # upsert the market data into the MongoDB collection

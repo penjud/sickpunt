@@ -1,10 +1,10 @@
-import React from 'react'
-import DataStream2 from '../components/DataStream'
+import OrdersTable from '../components/Orders'
 
 function Home() {
   return (
     <>
-    Bets
+      <div className="h2"> Placed Orders</div>
+      <OrdersTable />
     </>
   )
 }
