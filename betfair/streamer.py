@@ -23,9 +23,6 @@ SECS_MAX_RACE_DURATION = MINS_MAX_RACE_DURATION * 60
 
 SAVE_TICKDATA_TO_MONGO = False
 
-strategy = Strateegy1()
-
-
 class HorseRaceListener(StreamListener):
     def __init__(self, ff_cache, race_ids, last_cache, race_dict, punters_com_au, horse_info_dict, runnerid_name_dict):
         super().__init__()
@@ -159,8 +156,6 @@ class HorseRaceListener(StreamListener):
                     #     print(flattened_data)
                     if SAVE_TICKDATA_TO_MONGO:
                         tickdata_collection.insert_one(flattened_data)
-            
-            strategy.check(self.last_cache, self.ff_cache, flattened_data)
 
     def get_market_sum(self, market_id, field_name):
         total_sum = 0

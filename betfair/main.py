@@ -14,8 +14,9 @@ from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-from betfair.metadata import get_current_event_metadata
 from betfair.config import COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client
+from betfair.metadata import get_current_event_metadata
+from betfair.strategy import Strateegy1
 from betfair.streamer import HorseRaceListener
 
 app = FastAPI()
@@ -75,7 +76,7 @@ async def last_prices(websocket: WebSocket):
 
         # Before sending the data
         converted_ff_cache = convert_deque(ff_cache)
-        
+
         try:
             await websocket.send_json({"ff_cache": dict(converted_ff_cache)})
         except websockets.exceptions.ConnectionClosedOK:
@@ -84,6 +85,7 @@ async def last_prices(websocket: WebSocket):
 
 
 if __name__ == '__main__':
+    strategy = Strateegy1()
     race_ids = set()
     race_dict = dict()
     punters_com_au = dict()
@@ -93,6 +95,18 @@ if __name__ == '__main__':
     last_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     threading.Thread(target=lambda: get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict),
                      daemon=True).start()
+
+    def check_strategy(last_cache, ff_cache):
+        while True:
+            strategy.check_modify(last_cache, ff_cache)
+            strategy.check_execute(last_cache, ff_cache)
+            time.sleep(1)
+
+    # create a new thread and start it
+    t = threading.Thread(target=check_strategy, args=(
+        last_cache, ff_cache))
+    t.start()
+
     time.sleep(10)
     betfair_socket = client.streaming.create_stream(
         listener=HorseRaceListener(

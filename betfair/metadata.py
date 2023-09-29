@@ -1,15 +1,16 @@
 import json
+import logging
+import re
 import time
 from datetime import datetime, timedelta
-import re
+
 import pytz
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,
                             SECS_MARKET_FETCH_INTERVAL, client,
                             punters_com_au_collection, upsert_event_metadata)
-import logging
 
-log=logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
@@ -51,7 +52,7 @@ def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_i
                 race_data['marketStartTime']).replace(tzinfo=pytz.utc), 'runners': race_data['runners']}
 
             race_data_available.set()
-        
+
         # remove all elements in race_ids that are not in current_races
         race_ids.intersection_update(current_races)
         # print('----')
@@ -67,12 +68,13 @@ def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_i
         horse_names = []
         for race in race_datas:
             for horse in race['runners']:
-                horse_names.append(re.sub(r'^\d+\.\s+', '', horse['runnerName']))
+                horse_names.append(
+                    re.sub(r'^\d+\.\s+', '', horse['runnerName']))
                 runnerid_name_dict[horse['selectionId']] = horse['runnerName']
 
         # Execute the query
         horse_infos = list(punters_com_au_collection.find(
-            {"Horse Name": {"$in": horse_names}},{'_id' : 0}))
+            {"Horse Name": {"$in": horse_names}}, {'_id': 0}))
         for horse in horse_infos:
             horse_info_dict[horse['Horse Name']] = horse
 
