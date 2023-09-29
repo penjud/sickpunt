@@ -10,6 +10,8 @@ from betfairlightweight import StreamListener
 from betfair.config import tickdata_collection
 import logging
 
+from betfair.strategy import Strateegy1
+
 log=logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
@@ -20,6 +22,8 @@ SECS_MAX_RACE_DURATION = MINS_MAX_RACE_DURATION * 60
 
 
 SAVE_TICKDATA_TO_MONGO = False
+
+strategy = Strateegy1()
 
 
 class HorseRaceListener(StreamListener):
@@ -37,6 +41,7 @@ class HorseRaceListener(StreamListener):
         data = json.loads(raw_data)
         for market_change in data.get('mc', []):
             market_id = market_change.get('id')
+            # print (len(self.race_ids))
             if market_id in self.race_ids:
                 race_start_time = self.race_dict[market_id]['start_time']
                 secs_to_start = (race_start_time -
@@ -150,11 +155,12 @@ class HorseRaceListener(StreamListener):
                         # 'forward_fills': self.ff_cache[market_id],
                     }
                     races_len = len(flattened_data)
-                    log.info (f"Total amount of current streams {races_len}")
                     # if data.get('clk') != 'AAAAAAAA' and SECS_MAX_RACE_DURATION > flattened_data['meta']['secs_to_start'] > -SECS_TO_START_FILTER:
                     #     print(flattened_data)
                     if SAVE_TICKDATA_TO_MONGO:
                         tickdata_collection.insert_one(flattened_data)
+            
+            strategy.check(self.last_cache, self.ff_cache, flattened_data)
 
     def get_market_sum(self, market_id, field_name):
         total_sum = 0

@@ -54,6 +54,11 @@ def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_i
         
         # remove all elements in race_ids that are not in current_races
         race_ids.intersection_update(current_races)
+        # print('----')
+        # print(datetime.now())
+        # print (len(race_ids))
+        # print (race_ids)
+        # print(current_races)
 
         # print(race_datas)
         upsert_event_metadata(race_datas)
@@ -70,6 +75,5 @@ def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_i
             {"Horse Name": {"$in": horse_names}},{'_id' : 0}))
         for horse in horse_infos:
             horse_info_dict[horse['Horse Name']] = horse
-        # print (horse_info_dict)
 
         time.sleep(SECS_MARKET_FETCH_INTERVAL)

@@ -68,13 +68,19 @@ async def last_prices(websocket: WebSocket):
             else:
                 return data
 
+        for key in list(ff_cache.keys()):
+            if key not in race_ids:
+                print(f"Deleting {key} from ff_cache")
+                del ff_cache[key]
+
         # Before sending the data
         converted_ff_cache = convert_deque(ff_cache)
+        
         try:
             await websocket.send_json({"ff_cache": dict(converted_ff_cache)})
         except websockets.exceptions.ConnectionClosedOK:
             break
-        await asyncio.sleep(1)
+        await asyncio.sleep(.2)
 
 
 if __name__ == '__main__':
