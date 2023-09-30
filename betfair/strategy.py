@@ -1,5 +1,6 @@
 import copy
 from datetime import datetime
+import threading
 
 import pandas as pd
 import numpy as np
@@ -13,10 +14,13 @@ class Strateegy1:
     def __init__(self) -> None:
         pass
 
-    def check_execute(self, last, ff, orders) -> bool:
+    def check_execute(self, last, ff) -> bool:
+        lock = threading.Lock()
+        with lock:
+            ff_copy = copy.copy(ff)
+        for market_id, race_data in ff_copy.items():
 
-        for market_id, race_data in ff.items():
-
+            order_found = False
             # update seconds
             iso_format_string = ff[market_id]['_race_start_time']
             race_start_time = datetime.fromisoformat(iso_format_string)
@@ -25,7 +29,8 @@ class Strateegy1:
             ff[market_id]['_seconds_to_start'] = race_data['_seconds_to_start']
 
             # create dataframe for further manipulation
-            race_data2 = copy.deepcopy(race_data)
+            with lock:
+                race_data2 = copy.copy(race_data)
             if '_orders' in race_data2:
                 del race_data2['_orders']
             df = pd.DataFrame(race_data2).T
@@ -59,29 +64,33 @@ class Strateegy1:
 
             if execute:
                 # check we have no order for that horse already
-                if market_id in orders:
-                    if orders[market_id]['selection_id'] == selection_id:
-                        # print('already have an order for this horse')
-                        continue
+                orders = ff[market_id]['_orders']
+                if orders:
+                    for order in orders:
+                        if order['selection_id'] == selection_id:
+                            # print(f"Already have an order for {selection_id} in {market_id}")
+                            order_found = True
 
+                    if order_found:
+                        continue
+                
+                
                 order = {'size': size,
                          'selection_id': selection_id,
                          'price': price,
                          'side': side,
                          'persistence_type': persistent_type,
-                         'timestamp': datetime.now(),
+                         'timestamp': datetime.now().isoformat(),
                          'seconds_to_start': race_data['_seconds_to_start'],
                          }
-                orders[market_id] = order
-                orders[market_id]['timestamp'] = datetime.now().isoformat()
                 print(f"Placing order: {order}")
                 if isinstance(ff[market_id]['_orders'], list):
                     ff[market_id]['_orders'].append(order)
                 else:
                     ff[market_id]['_orders'] = [order]
-                orders_collection.insert_one(order)
-                place_order(market_id, selection_id, size, price,
-                            side=side, persistence_type=persistent_type)
+                orders_collection.insert_one(copy.copy(order))
+                # place_order(market_id, selection_id, size, price,
+                #             side=side, persistence_type=persistent_type)
 
-    def check_modify(self, last, ff, orders):
+    def check_modify(self, last, ff):
         pass

@@ -67,7 +67,7 @@ async def open_orders():
     try:
         # Use the list_current_orders method to retrieve information about your orders
         response = client.betting.list_current_orders()
-        orders = response.current_orders
+        orders = response.orders
         # Convert orders to a format suitable for JSON serialization
         orders_json = [{'bet_id': order.bet_id, 'status': order.status, 'price': order.price, 'size': order.size} for order in orders]
         return {"orders": orders_json}
@@ -113,7 +113,13 @@ async def last_prices(websocket: WebSocket):
             await websocket.send_json({"ff_cache": dict(converted_ff_cache)})
         except websockets.exceptions.ConnectionClosedOK:
             break
+        except TypeError as e:
+            print(f"TypeError: {e}")
+            print(f"Offending data: {converted_ff_cache}")
+            # Optionally, re-raise the exception if you want the error to propagate
+            # raise
         await asyncio.sleep(.2)
+
 
 
 if __name__ == '__main__':
@@ -129,15 +135,15 @@ if __name__ == '__main__':
     threading.Thread(target=lambda: get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict),
                      daemon=True).start()
 
-    def check_strategy(last_cache, ff_cache, orders):
+    def check_strategy(last_cache, ff_cache):
         while True:
-            strategy.check_modify(last_cache, ff_cache, orders)
-            strategy.check_execute(last_cache, ff_cache, orders)
+            strategy.check_modify(last_cache, ff_cache)
+            strategy.check_execute(last_cache, ff_cache)
             time.sleep(1)
 
     # create a new thread and start it
     t = threading.Thread(target=check_strategy, args=(
-        last_cache, ff_cache, orders))
+        last_cache, ff_cache))
     t.start()
 
     time.sleep(10)
