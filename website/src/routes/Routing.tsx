@@ -2,14 +2,14 @@
 import { Route, Routes } from "react-router-dom"
 import Home from "../views/Races"
 import Races from "../views/Races"
-import Bets from "../views/Bets"
+import Orders from "../views/Orders"
 
 function Routing() {
     return (
         <div>
             <Routes>
                 <Route path="races" element={<Races />} />
-                <Route path="bets" element={<Bets />} />
+                <Route path="orders" element={<Orders />} />
                 <Route path="/" element={<Races />} />
             </Routes>
         </div>

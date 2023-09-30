@@ -28,6 +28,16 @@ export interface HorseData {
     }
 }
 
+export interface OrderData {
+    size: number;
+    selection_id: string;
+    price: number;
+    side: string;
+    persistence_type: string;
+    timestamp: string;
+    seconds_to_start: number;
+    }
+
 export interface RaceData {
     raceId: string;
     horseData: HorseData[];
@@ -35,6 +45,7 @@ export interface RaceData {
     overrunLay: number;
     overrunLast: number;
     secondsToStart: number;
+    orders: OrderData[];
 }
 
 export interface RaceProps {

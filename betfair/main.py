@@ -12,7 +12,7 @@ import uvicorn
 import websockets
 from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client,
@@ -60,6 +60,19 @@ async def get_orders():
     :return: List of orders
     """
     return list(orders_collection.find({}, {'_id': False}))
+
+
+@app.post("/open_orders")
+async def open_orders():
+    try:
+        # Use the list_current_orders method to retrieve information about your orders
+        response = client.betting.list_current_orders()
+        orders = response.current_orders
+        # Convert orders to a format suitable for JSON serialization
+        orders_json = [{'bet_id': order.bet_id, 'status': order.status, 'price': order.price, 'size': order.size} for order in orders]
+        return {"orders": orders_json}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @app.websocket("/ff_cache")

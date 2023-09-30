@@ -127,6 +127,7 @@ class HorseRaceListener(StreamListener):
                     self.ff_cache[market_id]['_last_overrun'] = overrun_last = self.get_market_sum(
                         market_id, 'last')
                     self.ff_cache[market_id]['_seconds_to_start'] = secs_to_start
+                    self.ff_cache[market_id]['_race_start_time'] = race_start_time.isoformat()
 
                     flattened_data = {
                         # divide by 1000 to convert from milliseconds to seconds

@@ -28,7 +28,7 @@ tickdata_collection = mongo_db["tickdata"]
 orders_collection = mongo_db["orders"]
 
 # constants
-COUNTRIES = ['UK', 'AU']
+COUNTRIES = ['US', 'AU']
 MARKET_TYPES = ['WIN']
 EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
 

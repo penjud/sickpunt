@@ -15,7 +15,7 @@ function NavBar() {
                     <   Link className="nav-link" to="/races">Races</Link>
                     </li>
                     <li className="nav-item">
-                        <Link className="nav-link" to="/bets">Bets</Link>
+                        <Link className="nav-link" to="/orders">Orders</Link>
                     </li>
                 </ul>
             </div>
