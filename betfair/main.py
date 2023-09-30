@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import pytz
 import uvicorn
 import websockets
+from betfairlightweight.exceptions import SocketError
 from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -30,7 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 race_data_available = asyncio.Event()
-
+betfair_socket = None
 log = logging.getLogger(__name__)
 
 
@@ -69,10 +70,12 @@ async def open_orders():
         response = client.betting.list_current_orders()
         orders = response.orders
         # Convert orders to a format suitable for JSON serialization
-        orders_json = [{'bet_id': order.bet_id, 'status': order.status, 'price': order.price, 'size': order.size} for order in orders]
+        orders_json = [{'bet_id': order.bet_id, 'status': order.status,
+                        'price': order.price, 'size': order.size} for order in orders]
         return {"orders": orders_json}
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @app.websocket("/ff_cache")
@@ -121,6 +124,37 @@ async def last_prices(websocket: WebSocket):
         await asyncio.sleep(.2)
 
 
+def connect_to_stream():
+    global betfair_socket  # Declare betfair_socket as global inside the function
+    try:
+        betfair_socket = client.streaming.create_stream(
+            listener=HorseRaceListener(
+                ff_cache, race_ids, last_cache, race_dict,
+                punters_com_au, horse_info_dict, runnerid_name_dict
+            )
+        )
+        market_filter = streaming_market_filter(
+        event_type_ids=EVENT_TYPE_IDS,
+        country_codes=COUNTRIES,
+        market_types=MARKET_TYPES,
+        )
+        market_data_filter = streaming_market_data_filter(
+            fields=['EX_MARKET_DEF', 'EX_ALL_OFFERS', 'EX_TRADED'],
+            ladder_levels=3
+        )
+
+        betfair_socket.subscribe_to_markets(
+            market_filter=market_filter,
+            market_data_filter=market_data_filter
+        )
+
+        threading.Thread(target=betfair_socket.start).start()
+    except SocketError as err:
+        print(f"SocketError occurred. Reconnecting... {err}")
+        # Optionally, you might want to wait for a bit before reconnecting
+        time.sleep(5)
+        connect_to_stream()
+
 
 if __name__ == '__main__':
     strategy = Strateegy1()
@@ -147,25 +181,6 @@ if __name__ == '__main__':
     t.start()
 
     time.sleep(10)
-    betfair_socket = client.streaming.create_stream(
-        listener=HorseRaceListener(
-            ff_cache, race_ids, last_cache, race_dict, punters_com_au, horse_info_dict, runnerid_name_dict)
-    )
+    connect_to_stream()
 
-    market_filter = streaming_market_filter(
-        event_type_ids=EVENT_TYPE_IDS,
-        country_codes=COUNTRIES,
-        market_types=MARKET_TYPES,
-    )
-    market_data_filter = streaming_market_data_filter(
-        fields=['EX_MARKET_DEF', 'EX_ALL_OFFERS', 'EX_TRADED'],
-        ladder_levels=3
-    )
-
-    betfair_socket.subscribe_to_markets(
-        market_filter=market_filter,
-        market_data_filter=market_data_filter
-    )
-
-    threading.Thread(target=betfair_socket.start).start()
     uvicorn.run(app, host="0.0.0.0", port=7777)
