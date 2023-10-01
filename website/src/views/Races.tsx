@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import '../App.css';
 import OpenOrdersTable from '../components/OpenOrdersTable';
 import { RaceChart } from '../components/RaceChart';
-import { RaceData } from '../components/Types';
+import { RaceData } from '../helper/Types';
+import { API_URL } from '../helper/Constants';
 
 const MAX_RETRIES = 9999;
-const API_URL = import.meta.env.VITE_REACT_APP_API_URL || '3.24.169.161:7777';
 
 const DataStream2: React.FC = () => {
   const [raceData, setRaceData] = useState<RaceData[]>([]);

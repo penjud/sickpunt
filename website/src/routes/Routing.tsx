@@ -1,8 +1,8 @@
 
 import { Route, Routes } from "react-router-dom"
-import Home from "../views/Races"
-import Races from "../views/Races"
 import Orders from "../views/Orders"
+import Races from "../views/Races"
+import Strategy from "../views/Strategy"
 
 function Routing() {
     return (
@@ -10,6 +10,7 @@ function Routing() {
             <Routes>
                 <Route path="races" element={<Races />} />
                 <Route path="orders" element={<Orders />} />
+                <Route path="strategyeditor" element={<Strategy />} />
                 <Route path="/" element={<Races />} />
             </Routes>
         </div>

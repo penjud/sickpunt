@@ -17,6 +17,9 @@ function NavBar() {
                     <li className="nav-item">
                         <Link className="nav-link" to="/orders">Orders</Link>
                     </li>
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/strategyeditor">Strategies</Link>
+                    </li>
                 </ul>
             </div>
         </nav>

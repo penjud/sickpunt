@@ -26,6 +26,7 @@ metadata_collection = mongo_db["metadata"]
 punters_com_au_collection = mongo_db["punters_com_au"]
 tickdata_collection = mongo_db["tickdata"]
 orders_collection = mongo_db["orders"]
+strategy_collection = mongo_db["strategies"]
 
 # constants
 COUNTRIES = ['US', 'AU']

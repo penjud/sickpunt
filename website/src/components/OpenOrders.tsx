@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './Orders.css';
+import { API_URL } from '../helper/Constants';
 
-const API_URL = import.meta.env.VITE_REACT_APP_API_URL || '3.24.169.161:7777';
 
 function OpenOrders() {  // Renamed component to OpenOrders
     const [orders, setOrders] = useState([]);

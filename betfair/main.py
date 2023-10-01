@@ -17,7 +17,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client,
-                            orders_collection)
+                            orders_collection, strategy_collection)
 from betfair.metadata import get_current_event_metadata
 from betfair.strategy import Strateegy1
 from betfair.streamer import HorseRaceListener
@@ -62,6 +62,26 @@ async def get_orders():
     """
     return list(orders_collection.find({}, {'_id': False}))
 
+
+class StrategyName(BaseModel):
+    name: str
+
+@app.post("/load_strategy/")
+async def load_strategy(strategy: StrategyName):
+    # Finding the strategy by name
+    strategy_data = await strategy_collection.find_one({"name": strategy.name})
+    
+    if strategy_data:
+        # If found, return the data without the internal _id field
+        return {key: value for key, value in strategy_data.items() if key != "_id"}
+    else:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+
+@app.post("/get_strategies/")
+async def get_strategies():
+    # Finding distinct strategy names
+    strategy_names = await strategy_collection.distinct("name")
+    return {"strategies": strategy_names}
 
 @app.post("/open_orders")
 async def open_orders():
