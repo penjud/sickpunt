@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import './Strategy.css';
 import { API_URL } from '../helper/Constants';
+import './Strategy.css';
+import TimeBeforeRaceSlider from './TimeBeforeRaceSlider';
 
 
 function Strategy() {
@@ -16,6 +17,7 @@ function Strategy() {
 
   const [strategies, setStrategies] = useState([]);
   const [currentStrategy, setCurrentStrategy] = useState(null);
+
   const [isActiveSpeedMap, setIsActiveSpeedMap] = useState(false);
   const [isActiveFluctuations, setIsActiveFluctuations] = useState(false);
 
@@ -103,6 +105,39 @@ function Strategy() {
           <input type="radio" value="Back" checked={betType === "Back"} onChange={() => setBetType("Back")} />
           Back
         </label>
+      </div>
+
+      <div>
+        <TimeBeforeRaceSlider />
+      </div>
+
+
+      <div className="row">
+        <div className="col-md-6">
+          {/* SpeedMapOptions Component */}
+          <div className="mb-3">
+            <label>Speed Map Options:</label>
+            <button onClick={() => setIsActiveSpeedMap(!isActiveSpeedMap)}>Toggle Activation</button>
+            {/* Placeholder for SpeedMapOptions parameters */}
+          </div>
+
+          {/* FluctuationsOptions Component */}
+          <div className="mb-3">
+            <label>Fluctuations Options:</label>
+            <button onClick={() => setIsActiveFluctuations(!isActiveFluctuations)}>Toggle Activation</button>
+            {/* Placeholder for FluctuationsOptions parameters */}
+          </div>
+
+          {/* And similarly for other components... */}
+
+        </div>
+
+        <div className="col-md-6">
+          {/* Right column for the corresponding parameters */}
+          {isActiveSpeedMap && <div>SpeedMapOptions Parameters here</div>}
+          {isActiveFluctuations && <div>FluctuationsOptions Parameters here</div>}
+          {/* And similarly for other components... */}
+        </div>
       </div>
 
       {/* ... other form elements ... */}

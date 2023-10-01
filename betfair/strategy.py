@@ -21,13 +21,8 @@ class Strateegy1:
         for market_id, race_data in ff_copy.items():
 
             order_found = False
+            # print (f"Checking {market_id} at timestamp {datetime.now().isoformat()}")
             # update seconds
-            iso_format_string = ff[market_id]['_race_start_time']
-            race_start_time = datetime.fromisoformat(iso_format_string)
-            race_data['_seconds_to_start'] = (
-                race_start_time - datetime.utcnow().replace(tzinfo=pytz.utc)).total_seconds()
-            ff[market_id]['_seconds_to_start'] = race_data['_seconds_to_start']
-
             # create dataframe for further manipulation
             with lock:
                 race_data2 = copy.copy(race_data)

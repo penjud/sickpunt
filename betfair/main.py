@@ -1,5 +1,6 @@
 import asyncio
 import collections
+import copy
 import json
 import logging
 import threading
@@ -15,6 +16,7 @@ from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client,
                             orders_collection, strategy_collection)
@@ -66,22 +68,25 @@ async def get_orders():
 class StrategyName(BaseModel):
     name: str
 
+
 @app.post("/load_strategy/")
 async def load_strategy(strategy: StrategyName):
     # Finding the strategy by name
-    strategy_data = await strategy_collection.find_one({"name": strategy.name})
-    
+    strategy_data = strategy_collection.find_one({"name": strategy.name})
+
     if strategy_data:
         # If found, return the data without the internal _id field
         return {key: value for key, value in strategy_data.items() if key != "_id"}
     else:
         raise HTTPException(status_code=404, detail="Strategy not found")
 
+
 @app.post("/get_strategies/")
 async def get_strategies():
     # Finding distinct strategy names
-    strategy_names = await strategy_collection.distinct("name")
+    strategy_names = strategy_collection.distinct("name")
     return {"strategies": strategy_names}
+
 
 @app.post("/open_orders")
 async def open_orders():
@@ -154,9 +159,9 @@ def connect_to_stream():
             )
         )
         market_filter = streaming_market_filter(
-        event_type_ids=EVENT_TYPE_IDS,
-        country_codes=COUNTRIES,
-        market_types=MARKET_TYPES,
+            event_type_ids=EVENT_TYPE_IDS,
+            country_codes=COUNTRIES,
+            market_types=MARKET_TYPES,
         )
         market_data_filter = streaming_market_data_filter(
             fields=['EX_MARKET_DEF', 'EX_ALL_OFFERS', 'EX_TRADED'],
@@ -193,11 +198,29 @@ if __name__ == '__main__':
         while True:
             strategy.check_modify(last_cache, ff_cache)
             strategy.check_execute(last_cache, ff_cache)
+            # time.sleep(1)
+            
+    def update_remaining_time(last_cache, ff_cache):
+        while True:
+            lock = threading.Lock()
+            with lock:
+                ff_copy = copy.copy(ff_cache)
+            for market_id, race_data in ff_copy.items():
+                ff=ff_cache
+                iso_format_string = ff[market_id]['_race_start_time']
+                race_start_time = datetime.fromisoformat(iso_format_string)
+                race_data['_seconds_to_start'] = (
+                    race_start_time - datetime.utcnow().replace(tzinfo=pytz.utc)).total_seconds()
+                ff[market_id]['_seconds_to_start'] = race_data['_seconds_to_start']
             time.sleep(1)
 
     # create a new thread and start it
     t = threading.Thread(target=check_strategy, args=(
         last_cache, ff_cache))
+    t.start()
+    
+    t = threading.Thread(target=update_remaining_time, args=(
+    last_cache, ff_cache))
     t.start()
 
     time.sleep(10)
