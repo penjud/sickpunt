@@ -69,3 +69,10 @@
 .load-strategy button {
     width: 48%; /* Makes them sit side by side with a small gap */
 }
+
+
+.timeSlider {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}

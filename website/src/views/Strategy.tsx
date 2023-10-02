@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { API_URL } from '../helper/Constants';
 import './Strategy.css';
 import TimeBeforeRaceSlider from './TimeBeforeRaceSlider';
-
+import Editor from '../components/StrategyEditor/Editor';
+import 'bootstrap/dist/css/bootstrap.css';
+import './Strategy.css'
 
 function Strategy() {
   // State for each form element
@@ -13,12 +15,27 @@ function Strategy() {
 
   const [availableStrategies, setAvailableStrategies] = useState([]);
   const [selectedStrategy, setSelectedStrategy] = useState("");
+  const [attributesConfig, setAttributesConfig] = useState({});
 
-  const [strategies, setStrategies] = useState([]);
-  const [currentStrategy, setCurrentStrategy] = useState(null);
 
-  const [isActiveSpeedMap, setIsActiveSpeedMap] = useState(false);
-  const [isActiveFluctuations, setIsActiveFluctuations] = useState(false);
+  const updateEditorAttributes = (attr, newMin, newMax) => {
+    // Clone the existing attributesConfig state
+    const updatedAttributesConfig = { ...attributesConfig };
+    
+    // Update the specific attribute's min and max values
+    updatedAttributesConfig[attr] = {
+      min: newMin !== undefined ? newMin : attributesConfig[attr]?.min,
+      max: newMax !== undefined ? newMax : attributesConfig[attr]?.max,
+    };
+    
+    // Update the state
+    setAttributesConfig(updatedAttributesConfig);
+    
+    // Optionally, call a parent's onConfigChange if it exists
+    if (typeof onConfigChange === 'function') {
+      onConfigChange(updatedAttributesConfig);
+    }
+  };
 
   useEffect(() => {
     // Fetch available strategies when the component mounts
@@ -76,11 +93,9 @@ function Strategy() {
         <label>Select Countries:</label>
         <select multiple value={selectedCountries} onChange={(e) => setSelectedCountries(Array.from(e.target.selectedOptions, option => option.value))}>
           <option value="AU">Australia</option>
-          <option value="NZ">New Zealand</option>
+          {/* <option value="NZ">New Zealand</option>
           <option value="GB">Great Britain</option>
-          <option value="IRE">Ireland</option>
-          <option value="FRA">France</option>
-          <option value="USA">USA</option>
+          <option value="US">USA</option> */}
         </select>
       </div>
 
@@ -106,40 +121,13 @@ function Strategy() {
         </label>
       </div>
 
-      <div>
+      <div className="timeSlider">
         <TimeBeforeRaceSlider />
       </div>
 
-
-      <div className="row">
-        <div className="col-md-6">
-          {/* SpeedMapOptions Component */}
-          <div className="mb-3">
-            <label>Speed Map Options:</label>
-            <button onClick={() => setIsActiveSpeedMap(!isActiveSpeedMap)}>Toggle Activation</button>
-            {/* Placeholder for SpeedMapOptions parameters */}
-          </div>
-
-          {/* FluctuationsOptions Component */}
-          <div className="mb-3">
-            <label>Fluctuations Options:</label>
-            <button onClick={() => setIsActiveFluctuations(!isActiveFluctuations)}>Toggle Activation</button>
-            {/* Placeholder for FluctuationsOptions parameters */}
-          </div>
-
-          {/* And similarly for other components... */}
-
-        </div>
-
-        <div className="col-md-6">
-          {/* Right column for the corresponding parameters */}
-          {isActiveSpeedMap && <div>SpeedMapOptions Parameters here</div>}
-          {isActiveFluctuations && <div>FluctuationsOptions Parameters here</div>}
-          {/* And similarly for other components... */}
-        </div>
+      <div>
+        <Editor onConfigChange={updateEditorAttributes} />
       </div>
-
-      {/* ... other form elements ... */}
 
       {/* Submit button */}
       <div className="submit-btn">

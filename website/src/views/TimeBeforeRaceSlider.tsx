@@ -12,7 +12,7 @@ function TimeBeforeRaceSlider() {
     };
   
     return (
-      <Box sx={{ width: 300 }}>
+      <Box sx={{ width: 500 }}>
         <Typography id="range-slider" gutterBottom>
           Place bets in this time window
         </Typography>
