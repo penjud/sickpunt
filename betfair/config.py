@@ -29,7 +29,7 @@ orders_collection = mongo_db["orders"]
 strategy_collection = mongo_db["strategies"]
 
 # constants
-COUNTRIES = ['US', 'AU']
+COUNTRIES = ['AU']
 MARKET_TYPES = ['WIN']
 EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
 

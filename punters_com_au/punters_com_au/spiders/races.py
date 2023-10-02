@@ -32,29 +32,29 @@ class RacesSpider(scrapy.Spider):
 
     def parse_overview_page(self, response):
         html_content = response.body
-        # df = extract_table_to_df(html_content)
+        df = extract_table_to_df(html_content)
         
-        # pattern = r'https:\/\/www\.punters\.com\.au\/form-guide\/(?P<place>[\w-]+)_(?P<id>\d+)'
+        pattern = r'https:\/\/www\.punters\.com\.au\/form-guide\/(?P<place>[\w-]+)_(?P<id>\d+)'
 
-        # match = re.search(pattern, response.url)
-        # if match:
-        #     place = match.group('place')
-        #     id_ = match.group('id')
-        #     print(f"place={place}")
-        #     print(f"id={id_}")
-        # else:
-        #     print("Pattern not found in the provided URL.")
+        match = re.search(pattern, response.url)
+        if match:
+            place = match.group('place')
+            id_ = match.group('id')
+            print(f"place={place}")
+            print(f"id={id_}")
+        else:
+            print("Pattern not found in the provided URL.")
         
-        # # Extract the title
-        # soup = BeautifulSoup(response.text, 'html.parser')
-        # race_name = soup.title.string
+        # Extract the title
+        soup = BeautifulSoup(response.text, 'html.parser')
+        race_name = soup.title.string
 
-        # print("=====================")
-        # print(f"URL: {response.url}")
-        # print(df)
-        # for _, row in df.iterrows():
-        #     horse_name = row['Horse Name']
-        #     punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
+        print("=====================")
+        print(f"URL: {response.url}")
+        print(df)
+        for _, row in df.iterrows():
+            horse_name = row['Horse Name']
+            punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
 
         print("=====================")
         
@@ -71,10 +71,12 @@ class RacesSpider(scrapy.Spider):
 
             if response.status_code == 200:
                 csv_data = StringIO(response.text)
-                df = pd.read_csv(csv_data)
-                df[df.columns[1:]] = df[df.columns[:-1]].values
-                print (df)
-                for _, row in df.iterrows():
+                df2 = pd.read_csv(csv_data)
+                df2[df2.columns[1:]] = df2[df2.columns[:-1]].values
+                df_merged=pd.merge(df, df2, on='Horse Name')
+                print (df_merged)
+                df_merged = df_merged.fillna('NA')
+                for _, row in df_merged.iterrows():
                     horse_name = row['Horse Name']
                     punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
             else:
