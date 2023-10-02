@@ -72,9 +72,10 @@ class RacesSpider(scrapy.Spider):
             if response.status_code == 200:
                 csv_data = StringIO(response.text)
                 df = pd.read_csv(csv_data)
+                df[df.columns[1:]] = df[df.columns[:-1]].values
                 print (df)
                 for _, row in df.iterrows():
-                    horse_name = row[0]
+                    horse_name = row['Horse Name']
                     punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
             else:
                 print(f"Failed to download: {response.status_code}")
