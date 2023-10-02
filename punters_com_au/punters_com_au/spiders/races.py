@@ -8,6 +8,10 @@ import scrapy
 from bs4 import BeautifulSoup
 from scrapy.crawler import CrawlerProcess
 from betfair.config import punters_com_au_collection
+import requests
+import pandas as pd
+from io import StringIO
+
 
 class RacesSpider(scrapy.Spider):
     name = 'races'
@@ -25,41 +29,56 @@ class RacesSpider(scrapy.Spider):
         for url in urls:
             yield scrapy.Request(response.urljoin(url), callback=self.parse_overview_page)
 
-        for url in urls:
-            yield scrapy.Request(response.urljoin(url), callback=self.parse_sectional_times)
-
-    def parse_sectional_times(self, response):
-        html_content = response.body
-        
 
     def parse_overview_page(self, response):
         html_content = response.body
-        df = extract_table_to_df(html_content)
+        # df = extract_table_to_df(html_content)
         
-        pattern = r'https:\/\/www\.punters\.com\.au\/form-guide\/(?P<place>[\w-]+)_(?P<id>\d+)'
+        # pattern = r'https:\/\/www\.punters\.com\.au\/form-guide\/(?P<place>[\w-]+)_(?P<id>\d+)'
 
-        match = re.search(pattern, response.url)
+        # match = re.search(pattern, response.url)
+        # if match:
+        #     place = match.group('place')
+        #     id_ = match.group('id')
+        #     print(f"place={place}")
+        #     print(f"id={id_}")
+        # else:
+        #     print("Pattern not found in the provided URL.")
+        
+        # # Extract the title
+        # soup = BeautifulSoup(response.text, 'html.parser')
+        # race_name = soup.title.string
+
+        # print("=====================")
+        # print(f"URL: {response.url}")
+        # print(df)
+        # for _, row in df.iterrows():
+        #     horse_name = row['Horse Name']
+        #     punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
+
+        print("=====================")
+        
+        match = re.search(r'_(\d+)/$', response.url)
         if match:
-            place = match.group('place')
-            id_ = match.group('id')
-            print(f"place={place}")
-            print(f"id={id_}")
-        else:
-            print("Pattern not found in the provided URL.")
-        
-        # Extract the title
-        soup = BeautifulSoup(response.text, 'html.parser')
-        race_name = soup.title.string
+            number = match.group(1)  # Extracted number
+            new_url = f'https://www.punters.com.au/form-guide/spreadsheet-{number}'  # Formatted URL
+            print(new_url)
+            headers = {
+                'User-Agent': 'Mozilla/5.0',
+            }
 
-        print("=====================")
-        print(f"URL: {response.url}")
-        print(df)
-        for _, row in df.iterrows():
-            horse_name = row['Horse Name']
-            punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
+            response = requests.get(new_url, headers=headers)
 
-        print("=====================")
-
+            if response.status_code == 200:
+                csv_data = StringIO(response.text)
+                df = pd.read_csv(csv_data)
+                print (df)
+                for _, row in df.iterrows():
+                    horse_name = row['Horse Name']
+                    punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
+            else:
+                print(f"Failed to download: {response.status_code}")
+            
 
 def extract_table_to_df(html):
     soup = BeautifulSoup(html, 'html.parser')
