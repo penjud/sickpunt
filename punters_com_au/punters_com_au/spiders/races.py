@@ -21,10 +21,18 @@ class RacesSpider(scrapy.Spider):
         urls = response.xpath(
             "//div[@class='next-to-jump-horizontal__main punters-generic-component__main']/a/@href").extract()
 
+        # Overview site
         for url in urls:
-            yield scrapy.Request(response.urljoin(url), callback=self.parse_next_page)
+            yield scrapy.Request(response.urljoin(url), callback=self.parse_overview_page)
 
-    def parse_next_page(self, response):
+        for url in urls:
+            yield scrapy.Request(response.urljoin(url), callback=self.parse_sectional_times)
+
+    def parse_sectional_times(self, response):
+        html_content = response.body
+        
+
+    def parse_overview_page(self, response):
         html_content = response.body
         df = extract_table_to_df(html_content)
         

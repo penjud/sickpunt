@@ -14,7 +14,6 @@ function Strategy() {
   const [availableStrategies, setAvailableStrategies] = useState([]);
   const [selectedStrategy, setSelectedStrategy] = useState("");
 
-
   const [strategies, setStrategies] = useState([]);
   const [currentStrategy, setCurrentStrategy] = useState(null);
 

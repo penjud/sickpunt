@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
+import { RaceProps } from '../helper/Types'; // Assuming you will create this types file
 import { CustomTooltip } from './CustomTooltip';
-import { OverrunComponent } from './Overrun';
-import { RaceProps } from '../helper/Types';  // Assuming you will create this types file
+import '../views/Races.css';
 
 export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overrunLay, overrunLast, secondsToStart }) => {
     const [linesVisibility, setLinesVisibility] = useState({
@@ -111,36 +111,37 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
                 <input type="checkbox" id="lastMax" checked={linesVisibility.lastMax} onChange={() => toggleLineVisibility('lastMax')} />
                 <label htmlFor="lastMax">Last Max</label>
             </div>
+            <div className="linechart">
+                <LineChart width={800} height={chartHeight} data={horseDataWithOdds}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                        dataKey="horseId"
+                        angle={-90}
+                        textAnchor="end"
+                        interval={0}
+                        height={150}
+                        style={{
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                        }}
+                    />
+                    <YAxis domain={[0, 1]} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    {linesVisibility.back && <Line type="monotone" dataKey="data.back" stroke="#8884d8" dot={{ r: 4 }} />}
+                    {linesVisibility.backMovingAvg && <Line type="monotone" dataKey="data._back_moving_avg" stroke="#8884d8" strokeDasharray="5 5" />}
+                    {linesVisibility.lay && <Line type="monotone" dataKey="data.lay" stroke="#82ca9d" dot={{ r: 4 }} />}
+                    {linesVisibility.layMovingAvg && <Line type="monotone" dataKey="data._lay_moving_avg" stroke="#82ca9d" strokeDasharray="5 5" />}
+                    {linesVisibility.last && <Line type="monotone" dataKey="data.last" stroke="#ffc658" dot={{ r: 4 }} />}
+                    {linesVisibility.lastMovingAvg && <Line type="monotone" dataKey="data._last_moving_avg" stroke="#ffc658" strokeDasharray="5 5" />}
+                    {linesVisibility.lastMin && <Line type="monotone" dataKey="data._last_min" stroke="#ff0000" dot={{ r: 4 }} />}
+                    {linesVisibility.lastMax && <Line type="monotone" dataKey="data._last_max" stroke="#00ff00" dot={{ r: 4 }} />}
 
-            <LineChart width={800} height={chartHeight} data={horseDataWithOdds}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                    dataKey="horseId"
-                    angle={-90}
-                    textAnchor="end"
-                    interval={0}
-                    height={150}
-                    style={{
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                    }}
-                />
-                <YAxis domain={[0, 1]} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                {linesVisibility.back && <Line type="monotone" dataKey="data.back" stroke="#8884d8" dot={{ r: 4 }} />}
-                {linesVisibility.backMovingAvg && <Line type="monotone" dataKey="data._back_moving_avg" stroke="#8884d8" strokeDasharray="5 5" />}
-                {linesVisibility.lay && <Line type="monotone" dataKey="data.lay" stroke="#82ca9d" dot={{ r: 4 }} />}
-                {linesVisibility.layMovingAvg && <Line type="monotone" dataKey="data._lay_moving_avg" stroke="#82ca9d" strokeDasharray="5 5" />}
-                {linesVisibility.last && <Line type="monotone" dataKey="data.last" stroke="#ffc658" dot={{ r: 4 }} />}
-                {linesVisibility.lastMovingAvg && <Line type="monotone" dataKey="data._last_moving_avg" stroke="#ffc658" strokeDasharray="5 5" />}
-                {linesVisibility.lastMin && <Line type="monotone" dataKey="data._last_min" stroke="#ff0000" dot={{ r: 4 }} />}
-                {linesVisibility.lastMax && <Line type="monotone" dataKey="data._last_max" stroke="#00ff00" dot={{ r: 4 }} />}
-
-            </LineChart>
+                </LineChart>
+            </div>
         </div>
     );
 };
