@@ -74,7 +74,7 @@ class RacesSpider(scrapy.Spider):
                 df = pd.read_csv(csv_data)
                 print (df)
                 for _, row in df.iterrows():
-                    horse_name = row['Horse Name']
+                    horse_name = row[0]
                     punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
             else:
                 print(f"Failed to download: {response.status_code}")
