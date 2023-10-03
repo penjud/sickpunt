@@ -140,39 +140,40 @@ const DATA_ATTRIBUTES = [
 ];
 
 
-const StrategyEditor = ({ onConfigChange }) => {
+const Editor = ({ attributesConfig, setAttributesConfig }) => {
   const [selectedAttributes, setSelectedAttributes] = useState([]);
-  const [attributesConfig, setAttributesConfig] = useState({});
   const [selectedDropDownValue, setSelectedDropDownValue] = useState('');
 
   const addAttribute = () => {
     if (selectedDropDownValue && !selectedAttributes.includes(selectedDropDownValue)) {
       setSelectedAttributes([...selectedAttributes, selectedDropDownValue]);
+      setAttributesConfig({ ...attributesConfig, [selectedDropDownValue]: {} });
+      console.log(attributesConfig);
     }
   };
 
-  const removeAttribute = (attr) => {
+  const updateAttributeConfig = (attr: string, newMin?: number, newMax?: number) => {
+    // Clone the existing attributesConfig state
+    const updatedAttributesConfig = { ...attributesConfig };
+
+    // Update the specific attribute's min and max values
+    updatedAttributesConfig[attr] = {
+      min: newMin !== undefined ? newMin : attributesConfig[attr]?.min,
+      max: newMax !== undefined ? newMax : attributesConfig[attr]?.max,
+    };
+
+    // Update the state
+    setAttributesConfig(updatedAttributesConfig);
+  };
+
+  const removeAttribute = (attr: string) => {
     setSelectedAttributes(selectedAttributes.filter(a => a !== attr));
   };
 
-  const updateAttributeConfig = (attr, min, max) => {
-    setAttributesConfig({
-      ...attributesConfig,
-      [attr]: { min, max }
-    });
-  };
-
-  const saveConfig = () => {
-    const jsonConfig = JSON.stringify(attributesConfig);
-    console.log("Saved JSON:", jsonConfig);
-  };
-
-
   return (
-    
     <div className="container">
       <div className="row">
-      <h3>Attribute Selection</h3>
+        <h3>Attribute Selection</h3>
         <div className="col-8">
           <div style={{ position: 'relative' }}> {/* Container for select and icon */}
             <select id="attribute-dropdown" className="form-control" style={{ paddingRight: '24px' }} value={selectedDropDownValue} onChange={(e) => setSelectedDropDownValue(e.target.value)}>
@@ -214,4 +215,4 @@ const StrategyEditor = ({ onConfigChange }) => {
   );
 };
 
-export default StrategyEditor;
+export default Editor;

@@ -1,45 +1,79 @@
+import 'bootstrap/dist/css/bootstrap.css';
 import { useEffect, useState } from 'react';
+import Editor from '../components/StrategyEditor/Editor';
 import { API_URL } from '../helper/Constants';
 import './Strategy.css';
 import TimeBeforeRaceSlider from './TimeBeforeRaceSlider';
-import Editor from '../components/StrategyEditor/Editor';
-import 'bootstrap/dist/css/bootstrap.css';
-import './Strategy.css'
+
+interface IAttributesConfig {
+  [key: string]: {
+    min?: number,
+    max?: number,
+  } | string | undefined;
+  StrategyName?: string;
+}
+
+
 
 function Strategy() {
   // State for each form element
-  const [strategyName, setStrategyName] = useState("");
+  const [strategyName, setStrategyName] = useState<string>("");
   const [selectedCountries, setSelectedCountries] = useState([]);
   const [selectedSportType, setSelectedSportType] = useState("");
   const [betType, setBetType] = useState(""); // "Lay" or "Back"
 
   const [availableStrategies, setAvailableStrategies] = useState([]);
   const [selectedStrategy, setSelectedStrategy] = useState("");
-  const [attributesConfig, setAttributesConfig] = useState({});
+  const [attributesConfig, setAttributesConfig] = useState<IAttributesConfig>({});
 
+  const saveStrategy = () => {
 
-  const updateEditorAttributes = (attr, newMin, newMax) => {
-    // Clone the existing attributesConfig state
-    const updatedAttributesConfig = { ...attributesConfig };
-    
-    // Update the specific attribute's min and max values
-    updatedAttributesConfig[attr] = {
-      min: newMin !== undefined ? newMin : attributesConfig[attr]?.min,
-      max: newMax !== undefined ? newMax : attributesConfig[attr]?.max,
+    // Function to display Bootstrap alerts
+    const displayAlert = (message, type) => {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type} fixed-bottom text-center mb-0 rounded-0`;
+      alertDiv.innerHTML = message;
+      document.body.appendChild(alertDiv);
+      setTimeout(() => alertDiv.remove(), 3000);
     };
-    
-    // Update the state
-    setAttributesConfig(updatedAttributesConfig);
-    
-    // Optionally, call a parent's onConfigChange if it exists
-    if (typeof onConfigChange === 'function') {
-      onConfigChange(updatedAttributesConfig);
+
+    // Validation: Check if strategyName has at least 3 characters
+    if (!strategyName || strategyName.length < 3) {
+      displayAlert('Enter a strategy name under which to save the configuration', 'danger');
+      return;
     }
+
+    const payload = {
+      strategyName,
+      attributesConfig
+    };
+
+    // Log payload to the console
+    console.log("Saving strategy with the following configuration:", payload);
+
+    // Make POST request to /save_strategy
+    fetch(`http://${API_URL}/save_strategy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log("Response from server:", data);
+        displayAlert('Strategy successfully saved', 'success');
+      })
+      .catch(error => {
+        console.error("Error saving strategy:", error);
+        displayAlert('Failed to save strategy', 'danger');
+      });
   };
+
 
   useEffect(() => {
     // Fetch available strategies when the component mounts
-    fetch(`http://${API_URL}/get_strategies`, { method: 'POST' })
+    fetch(`http://${API_URL}/get_strategies`, { method: 'POST' })  // consider changing POST to GET
       .then(res => res.json())
       .then(data => {
         setAvailableStrategies(data.strategies || []); // assuming the response contains an array named 'strategies'
@@ -126,12 +160,12 @@ function Strategy() {
       </div>
 
       <div>
-        <Editor onConfigChange={updateEditorAttributes} />
+        <Editor attributesConfig={attributesConfig} setAttributesConfig={setAttributesConfig} />
       </div>
 
       {/* Submit button */}
       <div className="submit-btn">
-        <button onClick={() => { /* TODO: Add logic to send data to API */ }}>Save Strategy</button>
+        <button onClick={saveStrategy}>Save Strategy</button> {/* Invoke saveStrategy when clicked */}
       </div>
     </div>
   );

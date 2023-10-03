@@ -16,7 +16,7 @@ from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client,
                             orders_collection, strategy_collection)
@@ -84,8 +84,9 @@ async def load_strategy(strategy: StrategyName):
 @app.post("/get_strategies/")
 async def get_strategies():
     # Finding distinct strategy names
-    strategy_names = strategy_collection.distinct("name")
+    strategy_names = strategy_collection.distinct("strategy_name")  # changed from "name" to "strategy_name"
     return {"strategies": strategy_names}
+
 
 
 @app.post("/open_orders")
@@ -101,6 +102,37 @@ async def open_orders():
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+class StrategyConfig(BaseModel):
+    strategyName: str
+    attributesConfig: dict = Field(..., alias='attributesConfig')
+
+
+@app.post("/save_strategy")
+async def save_strategy(strategy_config: StrategyConfig):
+    try:
+        # Extract strategy name and attributes from the request body
+        strategy_name = strategy_config.strategyName
+        attributes_config = strategy_config.attributesConfig
+
+        # Define the filter and update query
+        filter_query = {'strategy_name': strategy_name}
+        update_query = {
+            '$set': {
+                'strategy_name': strategy_name,
+                'attributesConfig': attributes_config
+            }
+        }
+
+        # Perform upsert operation (Replace 'strategy_collection' with your MongoDB collection)
+        strategy_collection.update_one(filter_query, update_query, upsert=True)
+
+        return {"message": "Strategy successfully upserted"}
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @app.websocket("/ff_cache")
@@ -199,14 +231,14 @@ if __name__ == '__main__':
             strategy.check_modify(last_cache, ff_cache)
             strategy.check_execute(last_cache, ff_cache)
             # time.sleep(1)
-            
+
     def update_remaining_time(last_cache, ff_cache):
         while True:
             lock = threading.Lock()
             with lock:
                 ff_copy = copy.copy(ff_cache)
             for market_id, race_data in ff_copy.items():
-                ff=ff_cache
+                ff = ff_cache
                 iso_format_string = ff[market_id]['_race_start_time']
                 race_start_time = datetime.fromisoformat(iso_format_string)
                 race_data['_seconds_to_start'] = (
@@ -218,9 +250,9 @@ if __name__ == '__main__':
     t = threading.Thread(target=check_strategy, args=(
         last_cache, ff_cache))
     t.start()
-    
+
     t = threading.Thread(target=update_remaining_time, args=(
-    last_cache, ff_cache))
+        last_cache, ff_cache))
     t.start()
 
     time.sleep(10)
