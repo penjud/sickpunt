@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Slider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 
-function TimeBeforeRaceSlider() {
+const TimeBeforeRaceSlider = ({ attributesConfig, handleChange }) => {
     const [value, setValue] = useState([-3600, 600]);
   
-    const handleChange = (event, newValue) => {
-      setValue(newValue);
-    };
+
+    useEffect(() => {
+      if (attributesConfig.secsToStartSlider && attributesConfig.secsToStartSlider.length === 2) {
+        setValue(attributesConfig.secsToStartSlider);
+      }
+    }, [attributesConfig]);
+
+
   
     return (
       <Box sx={{ width: 500 }}>
@@ -18,7 +23,10 @@ function TimeBeforeRaceSlider() {
         </Typography>
         <Slider
           value={value}
-          onChange={handleChange}
+          onChange={(_, newValue) => {
+            setValue(newValue as [number, number]);
+            handleChange('secsToStartSlider', newValue);
+          }}
           valueLabelDisplay="auto"
           aria-labelledby="range-slider"
           min={-3600}

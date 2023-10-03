@@ -14,7 +14,8 @@ import websockets
 from betfairlightweight.exceptions import SocketError
 from betfairlightweight.filters import (streaming_market_data_filter,
                                         streaming_market_filter)
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import (FastAPI, HTTPException, Request, WebSocket,
+                     WebSocketDisconnect)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -65,28 +66,24 @@ async def get_orders():
     return list(orders_collection.find({}, {'_id': False}))
 
 
-class StrategyName(BaseModel):
-    name: str
 
-
-@app.post("/load_strategy/")
-async def load_strategy(strategy: StrategyName):
-    # Finding the strategy by name
-    strategy_data = strategy_collection.find_one({"name": strategy.name})
+@app.post("/load_strategy")
+async def load_strategy(strategy_name: str):
+    strategy_data = strategy_collection.find_one({"StrategyName": strategy_name})
 
     if strategy_data:
         # If found, return the data without the internal _id field
         return {key: value for key, value in strategy_data.items() if key != "_id"}
     else:
-        raise HTTPException(status_code=404, detail="Strategy not found")
+        raise HTTPException(status_code=404)
 
 
-@app.post("/get_strategies/")
+@app.post("/get_strategies")
 async def get_strategies():
     # Finding distinct strategy names
-    strategy_names = strategy_collection.distinct("strategy_name")  # changed from "name" to "strategy_name"
+    strategy_names = strategy_collection.distinct(
+        "StrategyName")  # changed from "name" to "strategy_name"
     return {"strategies": strategy_names}
-
 
 
 @app.post("/open_orders")
@@ -104,26 +101,29 @@ async def open_orders():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-class StrategyConfig(BaseModel):
-    strategyName: str
-    attributesConfig: dict = Field(..., alias='attributesConfig')
-
-
 @app.post("/save_strategy")
-async def save_strategy(strategy_config: StrategyConfig):
+async def save_strategy(request: Request):
     try:
-        # Extract strategy name and attributes from the request body
-        strategy_name = strategy_config.strategyName
-        attributes_config = strategy_config.attributesConfig
+        # Parse JSON to dictionary
+        strategy_config = await request.json()
+
+        # Extract strategy name for the upsert filter
+        strategy_name = strategy_config.get("StrategyName")
+
+        # Remove any unwanted keys like [[Prototype]], if needed
+        # (it generally won't be there in parsed JSON)
 
         # Define the filter and update query
-        filter_query = {'strategy_name': strategy_name}
-        update_query = {
-            '$set': {
-                'strategy_name': strategy_name,
-                'attributesConfig': attributes_config
-            }
-        }
+        filter_query = {'StrategyName': strategy_name}
+        update_query = {'$set': strategy_config}
+
+        # Assuming you're using pymongo to interact with MongoDB
+        strategy_collection.update_one(filter_query, update_query, upsert=True)
+
+        return {"message": "Strategy successfully saved"}
+
+    except Exception as e:
+        return {"error": str(e)}
 
         # Perform upsert operation (Replace 'strategy_collection' with your MongoDB collection)
         strategy_collection.update_one(filter_query, update_query, upsert=True)

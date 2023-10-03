@@ -17,7 +17,11 @@ log.setLevel(logging.INFO)
 def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict):
     while True:  # Repeat indefinitely
         # Get the current time and the time 60 minutes from now
-        client.login_interactive()
+        try:
+            client.login_interactive()
+        except:
+            print("Interactive login failed. Trying again in 1min.")
+            time.sleep(60)
         now = datetime.utcnow()
         end_time = now + timedelta(days=1)
         race_datas = []
