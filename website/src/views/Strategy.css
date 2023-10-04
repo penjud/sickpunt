@@ -60,7 +60,7 @@
 }
 
 .load-strategy {
-  display: flex;
+  display: flex;Ø
   align-items: center;
   justify-content: space-between;
 }
@@ -87,19 +87,19 @@
 }
 
 .radio-boxes {
-    display: flex;
-    align-items: center;
-    gap: 20px;  
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .selection-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .selections {
-    display: flex;
-    align-items: center;
-    gap: 20px;  
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }

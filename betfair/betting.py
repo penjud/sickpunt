@@ -1,33 +1,29 @@
 """Orchestration of placing and administering bets."""
 import betfairlightweight
-from betfairlightweight import filters
 import numpy as np
-from betfair.config import client
+from betfairlightweight import filters
+
+from betfair.config import client, tick_sizes
 
 # create trading instance
 trading = client
 
-tick_sizes = [(1.01, 2, 0.01),
-              (2.02, 3, 0.02),
-              (3.05, 4, 0.05),
-              (4.1, 6, 0.1),
-              (6.2, 10, 0.2),
-              (10.5, 20, 0.5),
-              (21, 30, 1.),
-              (32, 50, 2.),
-              (55, 100, 5.),
-              (110, 1000, 10.)]
 
 def create_ladder():
-    return np.concatenate(list(map(lambda x: np.arange(*x), tick_sizes)))
+    raw_ladder = np.concatenate(list(map(lambda x: np.arange(*x), tick_sizes)))
+    return np.round(raw_ladder, 10)
+
 
 price_ladder = create_ladder()
 
+
 def price_adjustment(price):
     i = 0
-    while price_ladder[i] < price:
+    while i < len(price_ladder) and price_ladder[i] < price:
         i += 1
-    return float(str(round(price_ladder[i], 2)))
+    if i >= len(price_ladder):
+        return None  # or any suitable value to indicate that `price` is out of ladder range
+    return round(price_ladder[i], 2)
 
 
 def place_order(market_id, selection_id, size, price, side='LAY', persistence_type='LAPSE'):

@@ -4,24 +4,27 @@ import { DATA_ATTRIBUTES } from '../../helper/Constants';
 import '../../views/Strategy.css';
 
 
-
-const Editor = ({ attributesConfig, setAttributesConfig, updateAttributeConfig }) => {
+const ConditionsManager = ({ data, setData, updateData }) => {
   const [selectedAttributes, setSelectedAttributes] = useState([]);
   const [selectedDropDownValue, setSelectedDropDownValue] = useState('');
 
-  // Keep selectedAttributes in sync with attributesConfig
+  const handleChange = (attr, value: any) => {
+    setData(prevConfig => ({ ...prevConfig, [attr]: value }));
+  };
+
+  // Keep selectedAttributes in sync with data
   useEffect(() => {
-    const attributes = Object.keys(attributesConfig).filter(attr => DATA_ATTRIBUTES.includes(attr));
+    const attributes = Object.keys(data).filter(attr => DATA_ATTRIBUTES.includes(attr));
     setSelectedAttributes(attributes);
-    console.log(attributesConfig)
-  }, [attributesConfig]);
+    console.log(data)
+  }, [data]);
 
 
   const addAttribute = () => {
     if (selectedDropDownValue && !selectedAttributes.includes(selectedDropDownValue)) {
       // setSelectedAttributes([...selectedAttributes, selectedDropDownValue]);
-      setAttributesConfig({ ...attributesConfig, [selectedDropDownValue]: {} });
-      console.log(attributesConfig);
+      setData({ ...data, [selectedDropDownValue]: {} });
+      console.log(data);
     }
   };
 
@@ -29,15 +32,28 @@ const Editor = ({ attributesConfig, setAttributesConfig, updateAttributeConfig }
 
   const removeAttribute = (attr: string) => {
     // setSelectedAttributes(selectedAttributes.filter(a => a !== attr));
-    const updatedAttributesConfig = { ...attributesConfig };
+    const updatedAttributesConfig = { ...data };
     delete updatedAttributesConfig[attr];
-    setAttributesConfig(updatedAttributesConfig);
+    setData(updatedAttributesConfig);
   };
 
   return (
     <div className="container">
       <div className="row">
         <h3>Available conditions</h3>
+
+        {/* Multi horses */}
+        <div className="selection-box d-flex">
+          <label>If missing data</label>
+          <div className="selections">
+            <select value={data.missingConditionsData} onChange={(e) => handleChange('missingConditionsData', e.target.value)}>
+              <option value="risk">Risk it when no data is available for a condition and skip the condition</option>
+              <option value="skip">Skip the bet if data is missing</option>
+            </select>
+          </div>
+        </div>
+
+
         <div className="col-8">
           <div> {/* Container for select and icon */}
             <select id="attribute-dropdown" className="form-control" style={{ paddingRight: '24px' }} value={selectedDropDownValue} onChange={(e) => setSelectedDropDownValue(e.target.value)}>
@@ -63,10 +79,10 @@ const Editor = ({ attributesConfig, setAttributesConfig, updateAttributeConfig }
             <li key={attr} className="row align-items-center">
               <div className="col-4">{attr}</div>
               <div className="col-3">
-                Min: <input className="form-control" type="number" value={attributesConfig[attr]?.min || ""} onChange={(e) => updateAttributeConfig(attr, e.target.value, attributesConfig[attr]?.max)} />
+                Min: <input className="form-control" type="number" value={data[attr]?.min || ""} onChange={(e) => updateData(attr, e.target.value, data[attr]?.max)} />
               </div>
               <div className="col-3">
-                Max: <input className="form-control" type="number" value={attributesConfig[attr]?.max || ""} onChange={(e) => updateAttributeConfig(attr, attributesConfig[attr]?.min, e.target.value)} />
+                Max: <input className="form-control" type="number" value={data[attr]?.max || ""} onChange={(e) => updateData(attr, data[attr]?.min, e.target.value)} />
               </div>
               <div className="col-2">
                 <button className="btn btn-danger" onClick={() => removeAttribute(attr)}>Remove</button>
@@ -79,4 +95,4 @@ const Editor = ({ attributesConfig, setAttributesConfig, updateAttributeConfig }
   );
 };
 
-export default Editor;
+export default ConditionsManager;

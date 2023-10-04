@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from collections import deque
 from datetime import datetime
@@ -8,11 +9,8 @@ import pytz
 from betfairlightweight import StreamListener
 
 from betfair.config import tickdata_collection
-import logging
 
-from betfair.strategy import StrategyHandler
-
-log=logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 MINS_TO_START_FILTER = 60
@@ -22,6 +20,7 @@ SECS_MAX_RACE_DURATION = MINS_MAX_RACE_DURATION * 60
 
 
 SAVE_TICKDATA_TO_MONGO = False
+
 
 class HorseRaceListener(StreamListener):
     def __init__(self, ff_cache, race_ids, last_cache, race_dict, punters_com_au, horse_info_dict, runnerid_name_dict):
@@ -127,7 +126,8 @@ class HorseRaceListener(StreamListener):
                     self.ff_cache[market_id]['_last_overrun'] = overrun_last = self.get_market_sum(
                         market_id, 'last')
                     self.ff_cache[market_id]['_seconds_to_start'] = secs_to_start
-                    self.ff_cache[market_id]['_race_start_time'] = race_start_time.isoformat()
+                    self.ff_cache[market_id]['_race_start_time'] = race_start_time.isoformat(
+                    )
 
                     flattened_data = {
                         # divide by 1000 to convert from milliseconds to seconds

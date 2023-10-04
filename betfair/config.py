@@ -31,7 +31,7 @@ orders_collection = mongo_db["orders"]
 strategy_collection = mongo_db["strategies"]
 
 # constants
-COUNTRIES = ['AU']
+COUNTRIES = ['AU', 'NZ', 'UK', 'IE']
 MARKET_TYPES = ['WIN']
 EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
 
@@ -55,3 +55,15 @@ def upsert_event_metadata(race_data):
 
 def is_prod_computer():
     return socket.gethostname() in SERVER_NAMES
+
+
+tick_sizes = [(1.01, 2, 0.01),
+              (2.02, 3, 0.02),
+              (3.05, 4, 0.05),
+              (4.1, 6, 0.1),
+              (6.2, 10, 0.2),
+              (10.5, 20, 0.5),
+              (21, 30, 1.),
+              (32, 50, 2.),
+              (55, 100, 5.),
+              (110, 1000, 10.)]

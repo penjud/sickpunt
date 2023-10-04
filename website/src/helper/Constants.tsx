@@ -135,4 +135,4 @@ export const DATA_ATTRIBUTES = [
     "Wet Track Runs",
     "Wet Track Strike Rate",
     "Wet Track Wins"
-  ];
+];

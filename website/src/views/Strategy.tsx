@@ -1,7 +1,7 @@
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.css';
 import { useEffect, useState } from 'react';
-import Editor from '../components/StrategyEditor/Editor';
+import ConditionsManager from '../components/StrategyEditor/ConditionsManager';
 import { API_URL, DATA_ATTRIBUTES } from '../helper/Constants';
 import './Strategy.css';
 import TimeBeforeRaceSlider from './TimeBeforeRaceSlider';
@@ -24,6 +24,8 @@ interface IAttributesConfig {
   maxBackTotalOdds: number;
   minLastTotalOdds: number;
   maxLastTotalOdds: number;
+  missingConditionsData: string;
+  secsToStartSlider: number[];
 }
 
 const defaultAttributesConfig: IAttributesConfig = {
@@ -44,6 +46,8 @@ const defaultAttributesConfig: IAttributesConfig = {
   maxBackTotalOdds: 5,
   minLastTotalOdds: 0,
   maxLastTotalOdds: 5,
+  missingConditionsData: "risk",
+  secsToStartSlider: [-3600, 600],
 };
 
 
@@ -65,7 +69,7 @@ function Strategy() {
   };
 
 
-  const updateAttributeConfig = (attr: string, newMin?: number, newMax?: number) => {
+  const updateData = (attr: string, newMin?: number, newMax?: number) => {
     // Clone the existing attributesConfig state
     const updatedAttributesConfig = { ...data };
 
@@ -105,7 +109,7 @@ function Strategy() {
     }
 
     // Validation: Check if at least one country is selected
-    if (!data.SelectedCountries || data.SelectedCountries.length === 0) {
+    if (!data.selectedCountries || data.selectedCountries.length === 0) {
       displayAlert('At least one country must be selected', 'danger');
       return;
     }
@@ -227,10 +231,11 @@ function Strategy() {
       {/* Country Selection */}
       <div className="country-selection">
         <label>Select Countries:</label>
-        <select multiple value={data.SelectedCountries} onChange={(e) => handleChange('SelectedCountries', Array.from(e.target.selectedOptions, option => option.value))}>
+        <select multiple value={data.selectedCountries} onChange={(e) => handleChange('selectedCountries', Array.from(e.target.selectedOptions, option => option.value))}>
           <option value="AU">Australia</option>
           <option value="NZ">New Zealand</option>
           <option value="GB">Great Britain</option>
+          <option value="IE">Ireland</option>
           <option value="US">USA</option>
         </select>
       </div>
@@ -271,9 +276,9 @@ function Strategy() {
         <label>Price:</label>
         <div className="selections">
           <select value={data.priceStrategy} onChange={(e) => handleChange('priceStrategy', e.target.value)}>
-            <option value="back">current Back</option>
+            <option value="back">Last offered back (for laying) </option>
             <option value="last">Last traded</option>
-            <option value="lay">current Lay</option>
+            <option value="lay">Last offered lay (for backing)</option>
             <option value="_back_moving_avg">Back moving average</option>
             <option value="_lay_moving_avg">Lay moving average</option>
           </select>
@@ -343,11 +348,13 @@ function Strategy() {
 
 
       <div className="timeSlider centered">
-        <TimeBeforeRaceSlider attributesConfig={data} handleChange={handleChange} />
+        <TimeBeforeRaceSlider data={data} handleChange={handleChange} />
       </div>
 
+
+
       <div>
-        <Editor attributesConfig={data} setAttributesConfig={setData} updateAttributeConfig={updateAttributeConfig} />
+        <ConditionsManager data={data} setData={setData} updateData={updateData} />
       </div>
 
       {/* Submit button */}

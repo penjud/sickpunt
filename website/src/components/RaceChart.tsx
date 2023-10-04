@@ -53,12 +53,12 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
     }
 
     const StrategyStatusComponent = ({ strategyStatus }) => (
-        <div style={{ fontSize: '14px' }}>
+        <div className="strategy-status">
             {/* <h4 style={{ marginBottom: '10px' }}>Strategy Status</h4> */}
-            <ul style={{ listStyleType: 'none', paddingLeft: '0' }}>
+            <ul>
                 {Object.keys(strategyStatus).map((key, index) => (
-                    <li key={index} style={{ marginBottom: '5px' }}>
-                        <span style={{ fontWeight: 'bold' }}>{key}:</span> <span>{strategyStatus[key]}</span>
+                    <li key={index}>
+                        <span>{key}:</span> <span>{strategyStatus[key]}</span>
                     </li>
                 ))}
             </ul>

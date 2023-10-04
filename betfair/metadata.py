@@ -54,7 +54,11 @@ def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_i
             race_ids.add(race_data['marketId'])
             current_races.add(race_data['marketId'])
             race_dict[race_data['marketId']] = {'start_time': datetime.fromisoformat(
-                race_data['marketStartTime']).replace(tzinfo=pytz.utc), 'runners': race_data['runners']}
+                race_data['marketStartTime']).replace(tzinfo=pytz.utc), 
+                                                'runners': race_data['runners'],
+                                                'event': race_data['event'],
+                                                'marketName': race_data['marketName'],
+                                                'totalMatched': race_data['totalMatched']}
 
             race_data_available.set()
 

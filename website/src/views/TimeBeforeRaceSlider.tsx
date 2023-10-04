@@ -4,15 +4,15 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 
-const TimeBeforeRaceSlider = ({ attributesConfig, handleChange }) => {
+const TimeBeforeRaceSlider = ({ data, handleChange }) => {
     const [value, setValue] = useState([-3600, 600]);
   
 
     useEffect(() => {
-      if (attributesConfig.secsToStartSlider && attributesConfig.secsToStartSlider.length === 2) {
-        setValue(attributesConfig.secsToStartSlider);
+      if (data.secsToStartSlider && data.secsToStartSlider.length === 2) {
+        setValue(data.secsToStartSlider);
       }
-    }, [attributesConfig]);
+    }, [data]);
 
 
   

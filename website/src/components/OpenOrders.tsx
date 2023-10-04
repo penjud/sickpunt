@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import './Orders.css';
 import { API_URL } from '../helper/Constants';
+import axios from 'axios';
 
 
 function OpenOrders() {  // Renamed component to OpenOrders
@@ -8,30 +9,25 @@ function OpenOrders() {  // Renamed component to OpenOrders
 
     useEffect(() => {
         const intervalId = setInterval(() => {
-            fetch(`http://${API_URL}/open_orders`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Add other headers here if necessary
-                },
-                // Uncomment the line below and adjust the body data if you need to send a payload with the POST request
-                // body: JSON.stringify({ key: 'value' }),
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+            axios.post(`http://${API_URL}/open_orders`, 
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                 }
-                return response.json();
+            )
+            .then(response => {
+                setOrders(response.data.orders); // Assuming the new endpoint returns an object with an "orders" property
             })
-            .then(data => setOrders(data.orders))  // Assuming the new endpoint returns an object with an orders property
             .catch(error => {
-                // Handle the error here. Maybe set an error state, or use a console.log.
                 console.error('Error fetching orders:', error);
             });
         }, 1000);
     
         return () => clearInterval(intervalId);
     }, []);
+    
+    
 
     const headers = orders.length > 0 ? Object.keys(orders[0]) : [];
 

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import '../App.css';
 import OpenOrdersTable from '../components/OpenOrdersTable';
 import { RaceChart } from '../components/RaceChart';
-import { RaceData } from '../helper/Types';
 import { API_URL } from '../helper/Constants';
+import { RaceData } from '../helper/Types';
 
 const MAX_RETRIES = 9999;
 
@@ -106,7 +106,7 @@ const DataStream2: React.FC = () => {
             strategyStatus={race.strategyStatus}
           />
 
-          <OpenOrdersTable data={race.orders}/>
+          <OpenOrdersTable data={race.orders} />
         </>
 
       ))}
