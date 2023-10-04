@@ -24,7 +24,9 @@ export interface HorseData {
             'Rtg': string;
             'W%': string;
             'Wgt': string;
+            '_strategy_status': {};
         };
+        _strategy_status: {};
     }
 }
 
@@ -46,6 +48,7 @@ export interface RaceData {
     overrunLast: number;
     secondsToStart: number;
     orders: OrderData[];
+    strategyStatus: {};
 }
 
 export interface RaceProps {
@@ -55,4 +58,5 @@ export interface RaceProps {
     overrunLay: number;
     overrunLast: number;
     secondsToStart: number;
+    strategyStatus: {};
 }

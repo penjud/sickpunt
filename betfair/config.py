@@ -1,5 +1,7 @@
 """Connection routines"""
 
+import socket
+
 import betfairlightweight
 from pymongo import MongoClient
 
@@ -33,7 +35,10 @@ COUNTRIES = ['AU']
 MARKET_TYPES = ['WIN']
 EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
 
+SERVER_NAMES = ['ip-172-31-35-26.ap-southeast-2.compute.internal']
+
 SECS_MARKET_FETCH_INTERVAL = 60
+
 
 def upsert_event_metadata(race_data):
     # upsert the market data into the MongoDB collection
@@ -46,3 +51,7 @@ def upsert_event_metadata(race_data):
             },
             upsert=True,
         )
+
+
+def is_prod_computer():
+    return socket.gethostname() in SERVER_NAMES

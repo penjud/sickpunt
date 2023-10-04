@@ -297,25 +297,50 @@ function Strategy() {
       </div>
 
 
-      {/* Multi horses */}
-      <div className="selection-box d-flex">
-        <label>Sum of odds in race</label>
-        <div className="selections">
-          <label>Back</label>
-          <input type="number" value={data.minBackTotalOdds} onChange={(e) => handleChange('minBackTotalOdds', e.target.value)} />
-          <input type="number" value={data.maxBackTotalOdds} onChange={(e) => handleChange('maxBackTotalOdds', e.target.value)} />
+      {/* Overruns */}
+      <div className="container">
+        <div className="row align-items-center mb-3">
+          <div className="col text-center">
+            <label>Sum of odds in race</label>
+          </div>
         </div>
-        <div className="selections">
-          <label>Lay</label>
-          <input type="number" value={data.minLayTotalOdds} onChange={(e) => handleChange('minLayTotalOdds', e.target.value)} />
-          <input type="number" value={data.maxLayTotalOdds} onChange={(e) => handleChange('maxLayTotalOdds', e.target.value)} />
+        <div className="row align-items-center">
+          <div className="col">
+            <label>Back</label>
+          </div>
+          <div className="col">
+            <label>Lay</label>
+          </div>
+          <div className="col">
+            <label>Last</label>
+          </div>
         </div>
-        <div className="selections">
-          <label>Last</label>
-          <input type="number" value={data.minLastTotalOdds} onChange={(e) => handleChange('minLastTotalOdds', e.target.value)} />
-          <input type="number" value={data.maxLastTotalOdds} onChange={(e) => handleChange('maxLastTotalOdds', e.target.value)} />
+        <div className="row align-items-center">
+          <div className="col">
+            <label style={{ fontWeight: 'normal' }}>Min</label>
+
+            <input type="number" className="form-control" placeholder="Min" value={data.minBackTotalOdds} onChange={(e) => handleChange('minBackTotalOdds', e.target.value)} />
+            <label style={{ fontWeight: 'normal' }}>Max</label>
+            <input type="number" className="form-control" placeholder="Max" value={data.maxBackTotalOdds} onChange={(e) => handleChange('maxBackTotalOdds', e.target.value)} />
+          </div>
+          <div className="col">
+            <label style={{ fontWeight: 'normal' }}>Min</label>
+
+            <input type="number" className="form-control" placeholder="Min" value={data.minLayTotalOdds} onChange={(e) => handleChange('minLayTotalOdds', e.target.value)} />
+            <label style={{ fontWeight: 'normal' }}>Max</label>
+            <input type="number" className="form-control" placeholder="Max" value={data.maxLayTotalOdds} onChange={(e) => handleChange('maxLayTotalOdds', e.target.value)} />
+          </div>
+          <div className="col">
+            <label style={{ fontWeight: 'normal' }}>Min</label>
+
+            <input type="number" className="form-control" placeholder="Min" value={data.minLastTotalOdds} onChange={(e) => handleChange('minLastTotalOdds', e.target.value)} />
+            <label style={{ fontWeight: 'normal' }}>Max</label>
+            <input type="number" className="form-control" placeholder="Max" value={data.maxLastTotalOdds} onChange={(e) => handleChange('maxLastTotalOdds', e.target.value)} />
+          </div>
         </div>
       </div>
+
+
 
       <div className="timeSlider centered">
         <TimeBeforeRaceSlider attributesConfig={data} handleChange={handleChange} />

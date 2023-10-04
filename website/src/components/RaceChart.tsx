@@ -4,7 +4,7 @@ import { RaceProps } from '../helper/Types'; // Assuming you will create this ty
 import { CustomTooltip } from './CustomTooltip';
 import '../views/Races.css';
 
-export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overrunLay, overrunLast, secondsToStart }) => {
+export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overrunLay, overrunLast, secondsToStart, strategyStatus }) => {
     const [linesVisibility, setLinesVisibility] = useState({
         back: true,
         backMovingAvg: false,
@@ -52,6 +52,21 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
         );
     }
 
+    const StrategyStatusComponent = ({ strategyStatus }) => (
+        <div style={{ fontSize: '14px' }}>
+            {/* <h4 style={{ marginBottom: '10px' }}>Strategy Status</h4> */}
+            <ul style={{ listStyleType: 'none', paddingLeft: '0' }}>
+                {Object.keys(strategyStatus).map((key, index) => (
+                    <li key={index} style={{ marginBottom: '5px' }}>
+                        <span style={{ fontWeight: 'bold' }}>{key}:</span> <span>{strategyStatus[key]}</span>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+    
+    
+
 
 
     const horseDataWithOdds = horseData.map((horse) => ({
@@ -69,6 +84,7 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
             _last_max: horse.data._last_max ? 1 / horse.data._last_max : null,
             _horse_name: horse.data._runner_name,
             _horse_info: horse.data._horse_info,
+            _strategy_status: horse.data._strategy_status,
         },
     }));
 
@@ -78,11 +94,12 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
     let hours = Math.floor(totalSeconds / 3600);
     let minutes = Math.abs(Math.floor((totalSeconds % 3600) / 60));
     let seconds = Math.abs(totalSeconds % 60);
-
+;
     return (
         <div>
             <div className="raceTitle">Race {raceId}</div>
             <OverrunComponent overrunBack={overrunBack} overrunLay={overrunLay} overrunLast={overrunLast} />
+            <StrategyStatusComponent strategyStatus={strategyStatus} />
             <p>
                 {hours}h {minutes}m {seconds}s
             </p>

@@ -35,6 +35,7 @@ const DataStream2: React.FC = () => {
               _last_max: data._last_max,
               _runner_name: data._runner_name,
               _horse_info: data._horse_info || {},
+              _strategy_status: data._strategy_status || {},
             },
           }));
 
@@ -48,6 +49,7 @@ const DataStream2: React.FC = () => {
           overrunLast: horses._last_overrun,
           secondsToStart: horses._seconds_to_start,
           orders: horses._orders,
+          strategyStatus: horses._strategy_status,
         };
       });
 
@@ -101,6 +103,7 @@ const DataStream2: React.FC = () => {
             overrunLay={race.overrunLay}
             overrunLast={race.overrunLast}
             secondsToStart={race.secondsToStart}
+            strategyStatus={race.strategyStatus}
           />
 
           <OpenOrdersTable data={race.orders}/>

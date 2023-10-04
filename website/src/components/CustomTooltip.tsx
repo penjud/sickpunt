@@ -20,6 +20,7 @@ export const CustomTooltip = ({ active, payload, label }) => {
           <div>{`Last Min: ${(1 / selectedData._last_min)?.toFixed(2)}`}</div>
           <div>{`Last: ${(1 / selectedData.last)?.toFixed(2)}`}</div>
           <div>{`Last Max: ${(1 / selectedData._last_max)?.toFixed(2)}`}</div>
+          <div>{`Strategy status: ${(selectedData._strategy_status)}`}</div>
         </div>
         
         <div className="table-section">

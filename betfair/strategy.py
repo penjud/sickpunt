@@ -5,12 +5,14 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import pytz
+from betfair.config import is_prod_computer
 
 from betfair.betting import place_order, price_adjustment
 from betfair.config import orders_collection
 import logging
 
 log = logging.getLogger(__name__)
+
 
 class StrategyHandler:
     def __init__(self) -> None:
@@ -20,8 +22,8 @@ class StrategyHandler:
         lock = threading.Lock()
         with lock:
             ff_copy = copy.copy(ff)
-
-        for _, strategy in strategies.items():
+            strategies_copy = copy.copy(strategies)
+        for _, strategy in strategies_copy.items():
             strategy_name = strategy.get('StrategyName', 'Unknown')
             bet_size = strategy.get('betSize', 0)
             bet_type = strategy.get('betType', 'Lay').upper()
@@ -33,17 +35,22 @@ class StrategyHandler:
             active = strategy.get('active', 'off')
             price_max_value = strategy.get('priceMaxValue', 1000)
             price_min_value = strategy.get('priceMinValue', 1.01)
-            min_last_total_odds = strategy.get('minLastTotalOdds', 1.01)
+            min_last_total_odds = strategy.get('minLastTotalOdds', 0)
             max_last_total_odds = strategy.get('maxLastTotalOdds', 1000)
-            min_back_total_odds = strategy.get('minBackTotalOdds', 1.01)
+            min_back_total_odds = strategy.get('minBackTotalOdds', 0)
             max_back_total_odds = strategy.get('maxBackTotalOdds', 1000)
-            min_lay_total_odds = strategy.get('minLayTotalOdds', 1.01)
+            min_lay_total_odds = strategy.get('minLayTotalOdds', 0)
             max_lay_total_odds = strategy.get('maxLayTotalOdds', 1000)
 
             for market_id, race_data in ff_copy.items():
                 with lock:
                     race_data2 = copy.copy(race_data)
-                if (strategy['secsToStartSlider'][0] > -race_data2['_seconds_to_start'] > strategy['secsToStartSlider'][1]):
+                if not race_data2['_seconds_to_start']:
+                    continue  # data not yet available
+                
+                if not (strategy['secsToStartSlider'][0] < -race_data2['_seconds_to_start'] < strategy['secsToStartSlider'][1]):
+                    update_strategy_status(
+                        ff, market_id, strategy_name, comment='Outside time window')
                     continue
                 order_found = False
                 # log.info (f"Checking {market_id} at timestamp {datetime.now().isoformat()}")
@@ -54,20 +61,18 @@ class StrategyHandler:
                     del race_data2['_orders']
                 df = pd.DataFrame(race_data2).T
 
-                # try:
                 last_total_odds = df.loc['_last_overrun'].iloc[0]
                 back_total_odds = df.loc['_back_overrun'].iloc[0]
                 lay_total_odds = df.loc['_lay_overrun'].iloc[0]
-                # except:
-                #     last_total_odds = np.nan
-                #     back_total_odds = np.nan
-                #     lay_total_odds = np.nan
 
                 if min_last_total_odds > last_total_odds > max_last_total_odds:
+                    update_strategy_status(ff, market_id, strategy_name, comment='Total last odds outside of allowed window')
                     continue
                 if min_back_total_odds > back_total_odds > max_back_total_odds:
+                    update_strategy_status(ff, market_id, strategy_name, comment='Total back odds outside of allowed window')
                     continue
                 if min_lay_total_odds > lay_total_odds > max_lay_total_odds:
+                    update_strategy_status(ff, market_id, strategy_name, comment='Total lay odds outside of allowed window')
                     continue
 
                 df = df.loc[~df.index.str.startswith('_')]
@@ -88,6 +93,8 @@ class StrategyHandler:
                             continue
                         if float(strategy_item['min']) > float(horse_info_dict[strategy_item]) > float(strategy_item['max']):
                             condition_met = False
+                            update_strategy_status(
+                                ff, market_id, strategy_name, selection_id, comment=f'{strategy_item} condition not met')
 
                     if not condition_met:
                         continue
@@ -106,14 +113,16 @@ class StrategyHandler:
                                     # log.info(f"Already have an order for {selection_id} in {market_id}")
                                     order_found = True
                             if order_found:
+                                update_strategy_status(ff, market_id, strategy_name, selection_id, comment='Order already placed')
                                 continue
-                        
+
                         status, bet_id, average_price_matched = 'dummy', 'dummy', 'dummy'
-                        if active == 'on':
-                            log.info({f"Sending to betfair: {strategy_name} {bet_type} {bet_size} {price} {selection_id} {market_id}"})
+                        if active == 'on' and is_prod_computer():
+                            log.info(
+                                {f"Sending to betfair: {strategy_name} {bet_type} {bet_size} {price} {selection_id} {market_id}"})
                             status, bet_id, average_price_matched = place_order(market_id, selection_id, bet_size, price,
-                                        side=bet_type, persistence_type=persistent_type)
-                            
+                                                                                side=bet_type, persistence_type=persistent_type)
+
                         order = {'strategy_name': strategy_name,
                                  'size': bet_size,
                                  'selection_id': selection_id,
@@ -135,3 +144,10 @@ class StrategyHandler:
 
     def check_modify(self, last, ff, strategies):
         pass
+
+
+def update_strategy_status(ff, market_id, strategy_name, selection_id=None, comment=None):
+    if selection_id:
+        ff[market_id][selection_id]['_strategy_status'] = comment
+    else:
+        ff[market_id]['_strategy_status'][strategy_name] = comment
