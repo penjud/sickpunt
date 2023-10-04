@@ -7,6 +7,7 @@ import threading
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import Dict
 
 import pytz
 import uvicorn
@@ -18,12 +19,16 @@ from fastapi import (FastAPI, HTTPException, Request, WebSocket,
                      WebSocketDisconnect)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from requests import request
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client,
                             orders_collection, strategy_collection)
+from betfair.helper import init_logger
 from betfair.metadata import get_current_event_metadata
-from betfair.strategy import Strateegy1
+from betfair.strategy import StrategyHandler
 from betfair.streamer import HorseRaceListener
+
+init_logger(screenlevel=logging.INFO, filename='default')
 
 app = FastAPI()
 app.add_middleware(
@@ -66,10 +71,10 @@ async def get_orders():
     return list(orders_collection.find({}, {'_id': False}))
 
 
-
 @app.post("/load_strategy")
 async def load_strategy(strategy_name: str):
-    strategy_data = strategy_collection.find_one({"StrategyName": strategy_name})
+    strategy_data = strategy_collection.find_one(
+        {"StrategyName": strategy_name})
 
     if strategy_data:
         # If found, return the data without the internal _id field
@@ -102,12 +107,10 @@ async def open_orders():
 
 
 @app.post("/save_strategy")
-async def save_strategy(request: Request):
+async def save_strategy(strategy_config: Dict):
     try:
-        # Parse JSON to dictionary
-        strategy_config = await request.json()
-
         # Extract strategy name for the upsert filter
+        strategy_config = strategy_config['strategy_config']
         strategy_name = strategy_config.get("StrategyName")
 
         # Remove any unwanted keys like [[Prototype]], if needed
@@ -205,7 +208,8 @@ def connect_to_stream():
             market_data_filter=market_data_filter
         )
 
-        threading.Thread(target=betfair_socket.start).start()
+        tr = threading.Thread(target=betfair_socket.start, daemon=True)
+        tr.start()
     except SocketError as err:
         print(f"SocketError occurred. Reconnecting... {err}")
         # Optionally, you might want to wait for a bit before reconnecting
@@ -214,23 +218,30 @@ def connect_to_stream():
 
 
 if __name__ == '__main__':
-    strategy = Strateegy1()
+    strategy_handler = StrategyHandler()
     race_ids = set()
     race_dict = dict()
     punters_com_au = dict()
     horse_info_dict = dict()
     runnerid_name_dict = dict()
     orders = dict()
+    strategies = dict()
     ff_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     last_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
-    threading.Thread(target=lambda: get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict),
-                     daemon=True).start()
 
-    def check_strategy(last_cache, ff_cache):
+    def check_strategy(last_cache, ff_cache, strategies):
         while True:
-            strategy.check_modify(last_cache, ff_cache)
-            strategy.check_execute(last_cache, ff_cache)
+            strategy_handler.check_execute(last_cache, ff_cache, strategies)
+            strategy_handler.check_modify(last_cache, ff_cache, strategies)
             # time.sleep(1)
+
+    def load_strategies(strategies):
+        while True:
+            loaded_strategies = strategy_collection.find(
+                {"active": {"$in": ["dummy", "on"]}})
+            for strategy in loaded_strategies:
+                strategies[strategy["StrategyName"]] = strategy
+            time.sleep(60)
 
     def update_remaining_time(last_cache, ff_cache):
         while True:
@@ -247,13 +258,22 @@ if __name__ == '__main__':
             time.sleep(1)
 
     # create a new thread and start it
-    t = threading.Thread(target=check_strategy, args=(
-        last_cache, ff_cache))
+    t = threading.Thread(target=lambda: get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict),
+                         daemon=True)
     t.start()
 
-    t = threading.Thread(target=update_remaining_time, args=(
-        last_cache, ff_cache))
-    t.start()
+    t0 = threading.Thread(target=load_strategies,
+                          args=(strategies,), daemon=True)
+    t0.start()
+    time.sleep(1)
+
+    t1 = threading.Thread(target=check_strategy, args=(
+        last_cache, ff_cache, strategies), daemon=True)
+    t1.start()
+
+    t2 = threading.Thread(target=update_remaining_time, args=(
+        last_cache, ff_cache), daemon=True)
+    t2.start()
 
     time.sleep(10)
     connect_to_stream()

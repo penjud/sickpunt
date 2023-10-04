@@ -10,7 +10,7 @@ from betfairlightweight import StreamListener
 from betfair.config import tickdata_collection
 import logging
 
-from betfair.strategy import Strateegy1
+from betfair.strategy import StrategyHandler
 
 log=logging.getLogger(__name__)
 log.setLevel(logging.INFO)

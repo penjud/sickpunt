@@ -7,6 +7,7 @@ import './Strategy.css';
 import TimeBeforeRaceSlider from './TimeBeforeRaceSlider';
 
 interface IAttributesConfig {
+  active: string;
   StrategyName: string;
   selectedCountries: string[];
   selectedSportType: string;
@@ -17,19 +18,32 @@ interface IAttributesConfig {
   priceMaxValue: number;
   maxHorsesToBet: number;
   maxHorsesToBetStrategy: string;
+  minLayTotalOdds: number;
+  maxLayTotalOdds: number;
+  minBackTotalOdds: number;
+  maxBackTotalOdds: number;
+  minLastTotalOdds: number;
+  maxLastTotalOdds: number;
 }
 
 const defaultAttributesConfig: IAttributesConfig = {
+  active: "off",
   StrategyName: "",
   selectedCountries: [],
-  selectedSportType: "",
+  selectedSportType: "Horse Racing",
   betType: "",
   betSize: 0,
   priceStrategy: "",
   priceMinValue: 0,
   priceMaxValue: 0,
   maxHorsesToBet: 0,
-  maxHorsesToBetStrategy: ""
+  maxHorsesToBetStrategy: "",
+  minLayTotalOdds: 0,
+  maxLayTotalOdds: 5,
+  minBackTotalOdds: 0,
+  maxBackTotalOdds: 5,
+  minLastTotalOdds: 0,
+  maxLastTotalOdds: 5,
 };
 
 
@@ -90,6 +104,17 @@ function Strategy() {
       return;
     }
 
+    // Validation: Check if at least one country is selected
+    if (!data.SelectedCountries || data.SelectedCountries.length === 0) {
+      displayAlert('At least one country must be selected', 'danger');
+      return;
+    }
+
+    // Validation: Check if at least one sport type is selected
+    if (!data.selectedSportType || data.selectedSportType === "") {
+      displayAlert('At least one sport type must be selected', 'danger');
+      return;
+    }
 
     // Additional Validation: Either Lay or Back should be selected
     if (data.betSize < 1) {
@@ -98,7 +123,7 @@ function Strategy() {
     }
 
     // Additional Validation: A min and a max price need to be entered
-    if (data.priceMinValue < 1  || data.priceMaxValue < 1) {
+    if (data.priceMinValue < 1 || data.priceMaxValue < 1) {
       displayAlert('Please enter both a minimum and a maximum price', 'danger');
       return;
     }
@@ -107,7 +132,7 @@ function Strategy() {
     console.log("Saving strategy with the following configuration:", data);
 
     // Make POST request to /save_strategy
-    axios.post(`http://${API_URL}/save_strategy`, data)
+    axios.post(`http://${API_URL}/save_strategy`, { strategy_config: data })
       .then(response => {
         console.log("Response from server:", response.data);
         displayAlert('Strategy successfully saved', 'success');
@@ -124,6 +149,7 @@ function Strategy() {
       .then(res => {
         setAvailableStrategies(res.data.strategies || []);
         console.log('Available Strategies:', res.data.strategies);
+        setData(defaultAttributesConfig);
       })
       .catch(error => {
         console.error('Error fetching strategies:', error);
@@ -134,17 +160,23 @@ function Strategy() {
 
   const loadStrategy = () => {
     console.log("Loading Strategy:", selectedStrategy);  // Debug log
-    // empty setData to clear the form
+
+    // Initialize data with defaultAttributesConfig
     setData(defaultAttributesConfig);
+    console.log("data before loading:", data)
 
     axios.post(`http://${API_URL}/load_strategy`, null, { params: { strategy_name: selectedStrategy } })
       .then(res => {
-        setData(res.data);
+        // Merge the default attributes with the loaded strategy data
+        const mergedData = { ...defaultAttributesConfig, ...res.data };
+
+        // Update the state to re-render your component
+        setData(mergedData);
         displayAlert('Strategy loaded', 'success');
       })
       .catch(error => {
         console.error('Error loading strategy:', error);
-        displayAlert('Failed to save strategy', 'danger');
+        displayAlert('Failed to load strategy', 'danger');
       });
   };
 
@@ -179,22 +211,35 @@ function Strategy() {
         <input type="text" value={data.StrategyName} onChange={(e) => handleChange('StrategyName', e.target.value)} />
       </div>
 
+      {/* Price and min/max values */}
+      <div className="selection-box d-flex">
+        <label>Strategy status:</label>
+        <div className="selections">
+          <select value={data.active} onChange={(e) => handleChange('active', e.target.value)}>
+            <option value="">Select</option>
+            <option value="off">Deactivated</option>
+            <option value="dummy">Dummy</option>
+            <option value="on">Active</option>
+          </select>
+        </div>
+      </div>
+
       {/* Country Selection */}
       <div className="country-selection">
         <label>Select Countries:</label>
-        <select multiple value={data.selectedCountries} onChange={(e) => handleChange('SelectedCountries', Array.from(e.target.selectedOptions, option => option.value))}>
+        <select multiple value={data.SelectedCountries} onChange={(e) => handleChange('SelectedCountries', Array.from(e.target.selectedOptions, option => option.value))}>
           <option value="AU">Australia</option>
-          {/* <option value="NZ">New Zealand</option>
+          <option value="NZ">New Zealand</option>
           <option value="GB">Great Britain</option>
-          <option value="US">USA</option> */}
+          <option value="US">USA</option>
         </select>
       </div>
 
       {/* Sport Type Selection */}
       <div className="sport-type">
         <label>Select Sport Type:</label>
-        <select value={data.selectedSportType} onChange={(e) => handleChange('selectedSportType', e.target.value)}
-        >
+        <select value={data.selectedSportType} onChange={(e) => handleChange('selectedSportType', e.target.value)}>
+          <option value="">Select</option>
           <option value="Horse Racing">Horse Racing</option>
           {/* ... add other sport types */}
         </select>
@@ -226,11 +271,11 @@ function Strategy() {
         <label>Price:</label>
         <div className="selections">
           <select value={data.priceStrategy} onChange={(e) => handleChange('priceStrategy', e.target.value)}>
-            <option value="last back">current Back</option>
+            <option value="back">current Back</option>
             <option value="last">Last traded</option>
             <option value="lay">current Lay</option>
-            <option value="back-lay average">current Back-Lay Average</option>
-            <option value="moving average">current Moving Average</option>
+            <option value="_back_moving_avg">Back moving average</option>
+            <option value="_lay_moving_avg">Lay moving average</option>
           </select>
           <input type="number" placeholder="Min" value={data.priceMinValue} onChange={(e) => handleChange('priceMinValue', e.target.value)} />
           <input type="number" placeholder="Max" value={data.priceMaxValue} onChange={(e) => handleChange('priceMaxValue', e.target.value)} />
@@ -245,9 +290,30 @@ function Strategy() {
           <input type="number" placeholder="Max" value={data.maxHorsesToBet} onChange={(e) => handleChange('maxHorsesToBet', e.target.value)} />
 
           <select value={data.maxHorsesToBetStrategy} onChange={(e) => handleChange('maxHorsesToBetStrategy', e.target.value)}>
-            <option value="lowest odds">Lowest odds only</option>
-            <option value="highest odds only">Highest odds only</option>
+            <option value="lowest odds first">Lowest odds first</option>
+            <option value="highest odds first">Highest odds first</option>
           </select>
+        </div>
+      </div>
+
+
+      {/* Multi horses */}
+      <div className="selection-box d-flex">
+        <label>Sum of odds in race</label>
+        <div className="selections">
+          <label>Back</label>
+          <input type="number" value={data.minBackTotalOdds} onChange={(e) => handleChange('minBackTotalOdds', e.target.value)} />
+          <input type="number" value={data.maxBackTotalOdds} onChange={(e) => handleChange('maxBackTotalOdds', e.target.value)} />
+        </div>
+        <div className="selections">
+          <label>Lay</label>
+          <input type="number" value={data.minLayTotalOdds} onChange={(e) => handleChange('minLayTotalOdds', e.target.value)} />
+          <input type="number" value={data.maxLayTotalOdds} onChange={(e) => handleChange('maxLayTotalOdds', e.target.value)} />
+        </div>
+        <div className="selections">
+          <label>Last</label>
+          <input type="number" value={data.minLastTotalOdds} onChange={(e) => handleChange('minLastTotalOdds', e.target.value)} />
+          <input type="number" value={data.maxLastTotalOdds} onChange={(e) => handleChange('maxLastTotalOdds', e.target.value)} />
         </div>
       </div>
 
