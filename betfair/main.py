@@ -243,19 +243,22 @@ if __name__ == '__main__':
                 strategies[strategy["StrategyName"]] = strategy
             time.sleep(60)
 
-    def update_remaining_time(last_cache, ff_cache):
+    def update_remaining_time(ff_cache):
         while True:
             lock = threading.Lock()
             with lock:
                 ff_copy = copy.copy(ff_cache)
             for market_id, race_data in ff_copy.items():
                 ff = ff_cache
-                iso_format_string = ff[market_id]['_race_start_time']
-                race_start_time = datetime.fromisoformat(iso_format_string)
-                race_data['_seconds_to_start'] = (
-                    race_start_time - datetime.utcnow().replace(tzinfo=pytz.utc)).total_seconds()
-                ff[market_id]['_seconds_to_start'] = race_data['_seconds_to_start']
-            time.sleep(1)
+                try:
+                    iso_format_string = ff[market_id]['_race_start_time']
+                    race_start_time = datetime.fromisoformat(iso_format_string)
+                    race_data['_seconds_to_start'] = (
+                        race_start_time - datetime.utcnow().replace(tzinfo=pytz.utc)).total_seconds()
+                    ff[market_id]['_seconds_to_start'] = race_data['_seconds_to_start']
+                except TypeError:
+                    log.error("TypeError in update_remaining_time, no starttime")
+            time.sleep(.5)
 
     # create a new thread and start it
     t = threading.Thread(target=lambda: get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict),
@@ -272,7 +275,7 @@ if __name__ == '__main__':
     t1.start()
 
     t2 = threading.Thread(target=update_remaining_time, args=(
-        last_cache, ff_cache), daemon=True)
+        ff_cache,), daemon=True)
     t2.start()
 
     time.sleep(10)
