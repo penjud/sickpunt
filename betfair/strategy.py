@@ -18,7 +18,7 @@ class StrategyHandler:
     def __init__(self) -> None:
         pass
 
-    def check_execute(self, last, ff, race_dict, strategies) -> bool:
+    def check_execute(self, last, ff, race_dict, runnerid_name_dict, strategies) -> bool:
         lock = threading.Lock()
         with lock:
             ff_copy = copy.copy(ff)
@@ -71,13 +71,13 @@ class StrategyHandler:
                 back_total_odds = df.loc['_back_overrun'].iloc[0]
                 lay_total_odds = df.loc['_lay_overrun'].iloc[0]
 
-                if min_last_total_odds >= last_total_odds >= max_last_total_odds:
+                if not(min_last_total_odds >= last_total_odds >= max_last_total_odds):
                     update_strategy_status(ff, market_id, strategy_name, comment='Total last odds outside of allowed window')
                     continue
-                if min_back_total_odds >= back_total_odds >= max_back_total_odds:
+                if not(min_back_total_odds >= back_total_odds >= max_back_total_odds):
                     update_strategy_status(ff, market_id, strategy_name, comment='Total back odds outside of allowed window')
                     continue
-                if min_lay_total_odds >= lay_total_odds >= max_lay_total_odds:
+                if not(min_lay_total_odds >= lay_total_odds >= max_lay_total_odds):
                     update_strategy_status(ff, market_id, strategy_name, comment='Total lay odds outside of allowed window')
                     continue
 
@@ -104,7 +104,7 @@ class StrategyHandler:
                                     ff, market_id, strategy_name, selection_id, comment=f'{strategy_item} not found in data')
                                 break
                             
-                        if float(strategy_item['min']) >= float(horse_info_dict[strategy_item]) >= float(strategy_item['max']):
+                        if not (float(strategy_item['min']) >= float(horse_info_dict[strategy_item]) >= float(strategy_item['max'])):
                             condition_met = False
                             update_strategy_status(
                                 ff, market_id, strategy_name, selection_id, comment=f'{strategy_item} condition not met')
@@ -138,10 +138,11 @@ class StrategyHandler:
                         order = {'strategy_name': strategy_name,
                                  'size': bet_size,
                                  'selection_id': selection_id,
+                                 'horse_name': runnerid_name_dict[int(selection_id)],
                                  'price': price,
                                  'side': bet_type,
                                  'persistence_type': persistent_type,
-                                 'timestamp': datetime.now().isoformat(),
+                                 'timestamp': datetime.now().isoformat()[:19],
                                  'seconds_to_start': -race_data2['_seconds_to_start'],
                                  'status': status,
                                  'bet_id': bet_id,
@@ -154,7 +155,7 @@ class StrategyHandler:
                             ff[market_id]['_orders'] = [order]
                         orders_collection.insert_one(copy.copy(order))
 
-    def check_modify(self, last, ff, race_dict, strategies):
+    def check_modify(self, last, ff, race_dict, runnerid_name_dict, strategies):
         pass
 
 

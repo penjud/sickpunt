@@ -4,17 +4,20 @@ import OpenOrdersTable from '../components/OpenOrdersTable';
 import { RaceChart } from '../components/RaceChart';
 import { API_URL } from '../helper/Constants';
 import { RaceData } from '../helper/Types';
+import { CircularProgress } from '@mui/material';
 
 const MAX_RETRIES = 9999;
 
-const DataStream2: React.FC = () => {
+const RaceStreamer: React.FC = () => {
   const [raceData, setRaceData] = useState<RaceData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);  
   let retryCount = 0;
 
   const connectSocket = () => {
     const socket = new WebSocket(`ws://${API_URL}/ff_cache`);
 
     socket.onmessage = (event) => {
+      setIsLoading(false);
       const rawData = JSON.parse(event.data);
       // console.log("WebSocket Data:", rawData);
       let formattedData: RaceData[] = Object.entries(rawData.ff_cache).map(([raceId, horses]) => {
@@ -92,8 +95,13 @@ const DataStream2: React.FC = () => {
 
   return (
     <div>
-      <div className="h1">Races</div>
-      {raceData.map((race) => (
+    <div className="h1">Races</div>
+    {isLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <CircularProgress />
+          </div>
+    ) : (
+      raceData.map((race) => (
         <>
           <RaceChart
             key={race.raceId}
@@ -105,13 +113,12 @@ const DataStream2: React.FC = () => {
             secondsToStart={race.secondsToStart}
             strategyStatus={race.strategyStatus}
           />
-
           <OpenOrdersTable data={race.orders} />
         </>
-
-      ))}
-    </div>
+      ))
+    )}
+  </div>
   );
 };
 
-export default DataStream2;
+export default RaceStreamer;

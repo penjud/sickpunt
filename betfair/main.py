@@ -229,10 +229,10 @@ if __name__ == '__main__':
     ff_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     last_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
 
-    def check_strategy(last_cache, ff_cache, race_dict, strategies):
+    def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies):
         while True:
-            strategy_handler.check_execute(last_cache, ff_cache, race_dict, strategies)
-            strategy_handler.check_modify(last_cache, ff_cache, race_dict, strategies)
+            strategy_handler.check_execute(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
+            strategy_handler.check_modify(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
             # time.sleep(1)
 
     def load_strategies(strategies):
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     time.sleep(1)
 
     t1 = threading.Thread(target=check_strategy, args=(
-        last_cache, ff_cache, race_dict, strategies), daemon=True)
+        last_cache, ff_cache, race_dict, runnerid_name_dict, strategies), daemon=True)
     t1.start()
 
     t2 = threading.Thread(target=update_remaining_time, args=(

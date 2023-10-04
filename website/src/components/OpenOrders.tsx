@@ -22,7 +22,7 @@ function OpenOrders() {  // Renamed component to OpenOrders
             .catch(error => {
                 console.error('Error fetching orders:', error);
             });
-        }, 1000);
+        }, 10000);
     
         return () => clearInterval(intervalId);
     }, []);
