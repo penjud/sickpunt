@@ -102,8 +102,7 @@ async def open_orders():
                         'price': order.price, 'size': order.size} for order in orders]
         return {"orders": orders_json}
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/save_strategy")

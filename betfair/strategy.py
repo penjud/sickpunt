@@ -71,13 +71,13 @@ class StrategyHandler:
                 back_total_odds = df.loc['_back_overrun'].iloc[0]
                 lay_total_odds = df.loc['_lay_overrun'].iloc[0]
 
-                if not(min_last_total_odds >= last_total_odds >= max_last_total_odds):
+                if not(float(min_last_total_odds) <= last_total_odds <= float(max_last_total_odds)):
                     update_strategy_status(ff, market_id, strategy_name, comment='Total last odds outside of allowed window')
                     continue
-                if not(min_back_total_odds >= back_total_odds >= max_back_total_odds):
+                if not(float(min_back_total_odds) <= back_total_odds <= float(max_back_total_odds)):
                     update_strategy_status(ff, market_id, strategy_name, comment='Total back odds outside of allowed window')
                     continue
-                if not(min_lay_total_odds >= lay_total_odds >= max_lay_total_odds):
+                if not(float(min_lay_total_odds) <= lay_total_odds <= float(max_lay_total_odds)):
                     update_strategy_status(ff, market_id, strategy_name, comment='Total lay odds outside of allowed window')
                     continue
 
@@ -104,7 +104,7 @@ class StrategyHandler:
                                     ff, market_id, strategy_name, selection_id, comment=f'{strategy_item} not found in data')
                                 break
                             
-                        if not (float(strategy_item['min']) >= float(horse_info_dict[strategy_item]) >= float(strategy_item['max'])):
+                        if not (float(strategy_item['min']) <= float(horse_info_dict[strategy_item]) <= float(strategy_item['max'])):
                             condition_met = False
                             update_strategy_status(
                                 ff, market_id, strategy_name, selection_id, comment=f'{strategy_item} condition not met')
