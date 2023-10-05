@@ -115,6 +115,11 @@ class StrategyHandler:
                     price = horse[price_strategy]
                     price = min(max(price, float(price_min_value)), float(price_max_value))
                     price = price_adjustment(price)
+                    
+                    try:
+                        horse_name = runnerid_name_dict[int(selection_id)]
+                    except KeyError:
+                        horse_name = selection_id
 
                     if active in ['dummy', 'on']:
                         # check we have no order for that horse already
@@ -138,7 +143,7 @@ class StrategyHandler:
                         order = {'strategy_name': strategy_name,
                                  'size': bet_size,
                                  'selection_id': selection_id,
-                                 'horse_name': runnerid_name_dict[int(selection_id)],
+                                 'horse_name': horse_name,
                                  'price': price,
                                  'side': bet_type,
                                  'persistence_type': persistent_type,

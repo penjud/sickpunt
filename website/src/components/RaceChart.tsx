@@ -90,18 +90,20 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
 
 
     const chartHeight = 400;
-    let totalSeconds = -secondsToStart.toFixed(0);
+    let totalSeconds = Math.abs(Math.floor(secondsToStart));
+    let sign = secondsToStart > 0 ? "-" : "";
+    
     let hours = Math.floor(totalSeconds / 3600);
-    let minutes = Math.abs(Math.floor((totalSeconds % 3600) / 60));
-    let seconds = Math.abs(totalSeconds % 60);
-;
+    let minutes = Math.floor((totalSeconds % 3600) / 60);
+    let seconds = totalSeconds % 60;
+    
     return (
         <div>
             <div className="raceTitle">Race {raceId}</div>
             <OverrunComponent overrunBack={overrunBack} overrunLay={overrunLay} overrunLast={overrunLast} />
             <StrategyStatusComponent strategyStatus={strategyStatus} />
             <p>
-                {hours}h {minutes}m {seconds}s
+                {sign}{hours}h {minutes}m {seconds}s
             </p>
             <div>
                 <input type="checkbox" id="back" checked={linesVisibility.back} onChange={() => toggleLineVisibility('back')} />
