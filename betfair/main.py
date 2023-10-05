@@ -3,6 +3,7 @@ import collections
 import copy
 import json
 import logging
+import queue
 import threading
 import time
 from collections import defaultdict
@@ -20,6 +21,7 @@ from fastapi import (FastAPI, HTTPException, Request, WebSocket,
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from requests import request
+from tenacity import retry, wait_exponential
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client,
                             orders_collection, strategy_collection)
@@ -183,37 +185,56 @@ async def last_prices(websocket: WebSocket):
         await asyncio.sleep(.2)
 
 
-def connect_to_stream():
-    global betfair_socket  # Declare betfair_socket as global inside the function
-    try:
-        betfair_socket = client.streaming.create_stream(
-            listener=HorseRaceListener(
-                ff_cache, race_ids, last_cache, race_dict,
-                punters_com_au, horse_info_dict, runnerid_name_dict
+class StreamWithReconnect(threading.Thread):
+    def __init__(self, client, listener, market_filter, market_data_filter):
+        super().__init__(daemon=True)
+        self.client = client
+        self.listener = listener
+        self.market_filter = market_filter
+        self.market_data_filter = market_data_filter
+        self.stream = None
+        self.output_queue = queue.Queue()
+
+    @retry(wait=wait_exponential(multiplier=1, min=2, max=30))
+    def run(self):
+        log.info("Starting StreamWithReconnect")
+        try:
+            self.stream = self.client.streaming.create_stream(
+                listener=self.listener
             )
-        )
-        market_filter = streaming_market_filter(
-            event_type_ids=EVENT_TYPE_IDS,
-            country_codes=COUNTRIES,
-            market_types=MARKET_TYPES,
-        )
-        market_data_filter = streaming_market_data_filter(
-            fields=['EX_MARKET_DEF', 'EX_ALL_OFFERS', 'EX_TRADED'],
-            ladder_levels=3
-        )
+            self.stream.subscribe_to_markets(
+                market_filter=self.market_filter,
+                market_data_filter=self.market_data_filter
+            )
+            self.stream.start()
+        except SocketError as err:
+            log.error(f"SocketError occurred: {err}")
+            raise
+        except Exception as e:
+            log.critical(f"Unhandled exception: {e}")
+            raise
 
-        betfair_socket.subscribe_to_markets(
-            market_filter=market_filter,
-            market_data_filter=market_data_filter
-        )
 
-        tr = threading.Thread(target=betfair_socket.start, daemon=True)
-        tr.start()
-    except SocketError as err:
-        print(f"SocketError occurred. Reconnecting... {err}")
-        # Optionally, you might want to wait for a bit before reconnecting
-        time.sleep(5)
-        connect_to_stream()
+def connect_to_stream():
+    # Assuming 'client' and all filter variables are already defined
+    listener = HorseRaceListener(
+        ff_cache, race_ids, last_cache, race_dict,
+        punters_com_au, horse_info_dict, runnerid_name_dict
+    )
+    market_filter = streaming_market_filter(
+        event_type_ids=EVENT_TYPE_IDS,
+        country_codes=COUNTRIES,
+        market_types=MARKET_TYPES,
+    )
+    market_data_filter = streaming_market_data_filter(
+        fields=['EX_MARKET_DEF', 'EX_ALL_OFFERS', 'EX_TRADED'],
+        ladder_levels=3
+    )
+
+    stream_thread = StreamWithReconnect(
+        client, listener, market_filter, market_data_filter
+    )
+    stream_thread.start()
 
 
 if __name__ == '__main__':
@@ -230,8 +251,10 @@ if __name__ == '__main__':
 
     def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies):
         while True:
-            strategy_handler.check_execute(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
-            strategy_handler.check_modify(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
+            strategy_handler.check_execute(
+                last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
+            strategy_handler.check_modify(
+                last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
             # time.sleep(1)
 
     def load_strategies(strategies):
@@ -256,7 +279,8 @@ if __name__ == '__main__':
                         race_start_time - datetime.utcnow().replace(tzinfo=pytz.utc)).total_seconds()
                     ff[market_id]['_seconds_to_start'] = race_data['_seconds_to_start']
                 except TypeError:
-                    log.error("TypeError in update_remaining_time, no starttime")
+                    log.error(
+                        "TypeError in update_remaining_time, no starttime")
             time.sleep(.5)
 
     # create a new thread and start it
