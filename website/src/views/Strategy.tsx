@@ -268,7 +268,7 @@ function Strategy() {
       {/* Bet Size */}
       <div className="bet-size">
         <label>Bet Size:</label>
-        <input type="number" value={data.betSize} onChange={(e) => handleChange('betSize', parseFloat(e.target.value))} />
+        <input title="Bet size in $" type="number" value={data.betSize} onChange={(e) => handleChange('betSize', parseFloat(e.target.value))} />
       </div>
 
       {/* Price and min/max values */}
@@ -282,8 +282,8 @@ function Strategy() {
             <option value="_back_moving_avg">Back moving average</option>
             <option value="_lay_moving_avg">Lay moving average</option>
           </select>
-          <input type="number" placeholder="Min" value={data.priceMinValue} onChange={(e) => handleChange('priceMinValue', e.target.value)} />
-          <input type="number" placeholder="Max" value={data.priceMaxValue} onChange={(e) => handleChange('priceMaxValue', e.target.value)} />
+          <input title="Minimum price in $" type="number" placeholder="Min" value={data.priceMinValue} onChange={(e) => handleChange('priceMinValue', e.target.value)} />
+          <input title="Allowed maximum price in $" type="number" placeholder="Max" value={data.priceMaxValue} onChange={(e) => handleChange('priceMaxValue', e.target.value)} />
         </div>
       </div>
 
@@ -292,7 +292,7 @@ function Strategy() {
       <div className="selection-box d-flex">
         <label>Maximum different horses bet per race</label>
         <div className="selections">
-          <input type="number" placeholder="Max" value={data.maxHorsesToBet} onChange={(e) => handleChange('maxHorsesToBet', e.target.value)} />
+          <input title="The amount of maximum horses that a bet is placed on for a single race" type="number" placeholder="Max" value={data.maxHorsesToBet} onChange={(e) => handleChange('maxHorsesToBet', e.target.value)} />
 
           <select value={data.maxHorsesToBetStrategy} onChange={(e) => handleChange('maxHorsesToBetStrategy', e.target.value)}>
             <option value="lowest odds first">Lowest odds first</option>
@@ -324,23 +324,23 @@ function Strategy() {
           <div className="col">
             <label style={{ fontWeight: 'normal' }}>Min</label>
 
-            <input type="number" className="form-control" placeholder="Min" value={data.minBackTotalOdds} onChange={(e) => handleChange('minBackTotalOdds', e.target.value)} />
+            <input title="The sum of odds of all back values, if it's lower than 1 it's probably a good idea to back because a lot of people want to lay on the race and you should be able to make a guaranteed profit if it's below 1, as the prices are too high. This value should stay at 0." type="number" className="form-control" placeholder="Min" value={data.minBackTotalOdds} onChange={(e) => handleChange('minBackTotalOdds', e.target.value)} />
             <label style={{ fontWeight: 'normal' }}>Max</label>
-            <input type="number" className="form-control" placeholder="Max" value={data.maxBackTotalOdds} onChange={(e) => handleChange('maxBackTotalOdds', e.target.value)} />
+            <input title="The sum of odds of all back values, if it's lower than 1 it's probably a good idea to back because a lot of people want to lay on the race and you should be able to make a guaranteed profit if it's below 1, as the prices are too high. This value should be slightly below 1 for back trades." type="number" className="form-control" placeholder="Max" value={data.maxBackTotalOdds} onChange={(e) => handleChange('maxBackTotalOdds', e.target.value)} />
           </div>
           <div className="col">
             <label style={{ fontWeight: 'normal' }}>Min</label>
 
-            <input type="number" className="form-control" placeholder="Min" value={data.minLayTotalOdds} onChange={(e) => handleChange('minLayTotalOdds', e.target.value)} />
+            <input title="Value should be slightly above 1 for lay trades. Then then there are too many backers in the race, the prices get too low (odds too high, above 1), and you can make a profit with laying." type="number" className="form-control" placeholder="Min" value={data.minLayTotalOdds} onChange={(e) => handleChange('minLayTotalOdds', e.target.value)} />
             <label style={{ fontWeight: 'normal' }}>Max</label>
-            <input type="number" className="form-control" placeholder="Max" value={data.maxLayTotalOdds} onChange={(e) => handleChange('maxLayTotalOdds', e.target.value)} />
+            <input title="Value should stay high for lays, as the higher the better" type="number" className="form-control" placeholder="Max" value={data.maxLayTotalOdds} onChange={(e) => handleChange('maxLayTotalOdds', e.target.value)} />
           </div>
           <div className="col">
             <label style={{ fontWeight: 'normal' }}>Min</label>
 
-            <input type="number" className="form-control" placeholder="Min" value={data.minLastTotalOdds} onChange={(e) => handleChange('minLastTotalOdds', e.target.value)} />
+            <input title="For backs, the lower the better, for lays, the higher the better" type="number" className="form-control" placeholder="Min" value={data.minLastTotalOdds} onChange={(e) => handleChange('minLastTotalOdds', e.target.value)} />
             <label style={{ fontWeight: 'normal' }}>Max</label>
-            <input type="number" className="form-control" placeholder="Max" value={data.maxLastTotalOdds} onChange={(e) => handleChange('maxLastTotalOdds', e.target.value)} />
+            <input title="For backs, the lower the better, for lays, the higher the better" type="number" className="form-control" placeholder="Max" value={data.maxLastTotalOdds} onChange={(e) => handleChange('maxLastTotalOdds', e.target.value)} />
           </div>
         </div>
       </div>

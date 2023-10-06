@@ -84,7 +84,13 @@ class StrategyHandler:
                 df = df.loc[~df.index.str.startswith('_')]
 
                 ascending = True if max_horses_to_bet_strategy == 'lowest odds first' else False
-                df = df.sort_values(price_strategy, ascending=ascending)
+                try:
+                    df = df.sort_values(price_strategy, ascending=ascending)
+                except KeyError:
+                    log.warning(f"Price strategy {price_strategy} not found in data")
+                    update_strategy_status(ff, market_id, strategy_name, comment='Price strategy not found in data')
+                    continue
+                
                 df = df.head(int(max_horses_to_bet))
 
                 for selection_id, horse in df.iterrows():
