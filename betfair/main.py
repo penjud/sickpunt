@@ -135,7 +135,7 @@ async def save_strategy(strategy_config: Dict):
         return {"message": "Strategy successfully upserted"}
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        log.error(f"An error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
@@ -167,7 +167,7 @@ async def last_prices(websocket: WebSocket):
 
         for key in list(ff_cache.keys()):
             if key not in race_ids:
-                print(f"Deleting {key} from ff_cache")
+                log.info(f"Deleting {key} from ff_cache")
                 del ff_cache[key]
 
         # Before sending the data
@@ -178,8 +178,8 @@ async def last_prices(websocket: WebSocket):
         except websockets.exceptions.ConnectionClosedOK:
             break
         except TypeError as e:
-            print(f"TypeError: {e}")
-            print(f"Offending data: {converted_ff_cache}")
+            log.error(f"TypeError: {e}")
+            log.error(f"Offending data: {converted_ff_cache}")
             # Optionally, re-raise the exception if you want the error to propagate
             # raise
         await asyncio.sleep(.2)

@@ -70,15 +70,20 @@ class StrategyHandler:
                 last_total_odds = df.loc['_last_overrun'].iloc[0]
                 back_total_odds = df.loc['_back_overrun'].iloc[0]
                 lay_total_odds = df.loc['_lay_overrun'].iloc[0]
-
-                if not(float(min_last_total_odds) <= last_total_odds <= float(max_last_total_odds)):
-                    update_strategy_status(ff, market_id, strategy_name, comment='Total last odds outside of allowed window')
-                    continue
-                if not(float(min_back_total_odds) <= back_total_odds <= float(max_back_total_odds)):
-                    update_strategy_status(ff, market_id, strategy_name, comment='Total back odds outside of allowed window')
-                    continue
-                if not(float(min_lay_total_odds) <= lay_total_odds <= float(max_lay_total_odds)):
-                    update_strategy_status(ff, market_id, strategy_name, comment='Total lay odds outside of allowed window')
+                
+                try:
+                    if not(float(min_last_total_odds) <= last_total_odds <= float(max_last_total_odds)):
+                        update_strategy_status(ff, market_id, strategy_name, comment='Total last odds outside of allowed window')
+                        continue
+                    if not(float(min_back_total_odds) <= back_total_odds <= float(max_back_total_odds)):
+                        update_strategy_status(ff, market_id, strategy_name, comment='Total back odds outside of allowed window')
+                        continue
+                    if not(float(min_lay_total_odds) <= lay_total_odds <= float(max_lay_total_odds)):
+                        update_strategy_status(ff, market_id, strategy_name, comment='Total lay odds outside of allowed window')
+                        continue
+                except ValueError as err:
+                    log.warning(err)
+                    update_strategy_status(ff, market_id, strategy_name, comment='Value Error in min/max total odds. Check the values')
                     continue
 
                 df = df.loc[~df.index.str.startswith('_')]
