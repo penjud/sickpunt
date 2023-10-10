@@ -27,7 +27,7 @@ class StrategyHandler:
             strategy_name = strategy.get('StrategyName', 'Unknown')
             bet_size = strategy.get('betSize', 0)
             bet_type = strategy.get('betType', 'Lay').upper()
-            max_horses_to_bet = strategy.get('maxHorsesToBet', 1)
+            max_horses_to_bet = int(strategy.get('maxHorsesToBet', 1))
             max_horses_to_bet_strategy = strategy.get(
                 'maxHorsesToBetStrategy', '')
             persistent_type = 'LAPSE'
@@ -43,6 +43,12 @@ class StrategyHandler:
             max_lay_total_odds = strategy.get('maxLayTotalOdds', 1000)
 
             for market_id, race_data in ff_copy.items():
+                strategy_race_order_count = len([order for order in ff_copy[market_id]['_orders'] if order.get('strategy_name') == strategy_name])
+                if strategy_race_order_count>=max_horses_to_bet:
+                    update_strategy_status(
+                        ff, market_id, strategy_name, comment=f'Already bet on {max_horses_to_bet} horses.')
+                    continue
+                
                 with lock:
                     race_data2 = copy.copy(race_data)
                     race_dict2 = copy.copy(race_dict)
@@ -73,13 +79,13 @@ class StrategyHandler:
                 
                 try:
                     if not(float(min_last_total_odds) <= last_total_odds <= float(max_last_total_odds)):
-                        update_strategy_status(ff, market_id, strategy_name, comment='Total last odds outside of allowed window')
+                        update_strategy_status(ff, market_id, strategy_name, comment=f'Total last odds {last_total_odds} outside of allowed window')
                         continue
                     if not(float(min_back_total_odds) <= back_total_odds <= float(max_back_total_odds)):
-                        update_strategy_status(ff, market_id, strategy_name, comment='Total back odds outside of allowed window')
+                        update_strategy_status(ff, market_id, strategy_name, comment=f'Total back odds {back_total_odds} outside of allowed window')
                         continue
                     if not(float(min_lay_total_odds) <= lay_total_odds <= float(max_lay_total_odds)):
-                        update_strategy_status(ff, market_id, strategy_name, comment='Total lay odds outside of allowed window')
+                        update_strategy_status(ff, market_id, strategy_name, comment=f'Total lay odds {lay_total_odds} outside of allowed window')
                         continue
                 except ValueError as err:
                     log.warning(err)
@@ -96,7 +102,7 @@ class StrategyHandler:
                     update_strategy_status(ff, market_id, strategy_name, comment='Price strategy not found in data')
                     continue
                 
-                df = df.head(int(max_horses_to_bet))
+                df = df.head(max_horses_to_bet)
 
                 for selection_id, horse in df.iterrows():
 
