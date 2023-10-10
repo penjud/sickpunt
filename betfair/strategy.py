@@ -158,6 +158,7 @@ class StrategyHandler:
                                                                                 side=bet_type, persistence_type=persistent_type)
 
                         order = {'strategy_name': strategy_name,
+                                 'market_id': market_id,
                                  'size': bet_size,
                                  'selection_id': selection_id,
                                  'horse_name': horse_name,
