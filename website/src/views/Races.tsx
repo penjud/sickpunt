@@ -6,7 +6,7 @@ import { API_URL } from '../helper/Constants';
 import { RaceData } from '../helper/Types';
 import { CircularProgress } from '@mui/material';
 
-const MAX_RETRIES = 9999;
+const MAX_RETRIES = 999999;
 
 const RaceStreamer: React.FC = () => {
   const [raceData, setRaceData] = useState<RaceData[]>([]);

@@ -79,15 +79,15 @@ class StrategyHandler:
 
                 if not ((min_last_total_odds) <= last_total_odds <= (max_last_total_odds)):
                     update_strategy_status(
-                        ff, market_id, strategy_name, comment=f'Total last odds {last_total_odds} outside of allowed window')
+                        ff, market_id, strategy_name, comment=f'Total last odds {round(last_total_odds,2)} outside of allowed window {round(min_last_total_odds,2)} - {round(max_last_total_odds,2)}')
                     continue
                 if not ((min_back_total_odds) <= back_total_odds <= (max_back_total_odds)):
                     update_strategy_status(
-                        ff, market_id, strategy_name, comment=f'Total back odds {back_total_odds} outside of allowed window')
+                        ff, market_id, strategy_name, comment=f'Total back odds {round(back_total_odds,2)} outside of allowed window {round(min_back_total_odds,2)} - {round(max_back_total_odds,2)}')
                     continue
                 if not ((min_lay_total_odds) <= lay_total_odds <= (max_lay_total_odds)):
                     update_strategy_status(
-                        ff, market_id, strategy_name, comment=f'Total lay odds {lay_total_odds} outside of allowed window')
+                        ff, market_id, strategy_name, comment=f'Total lay odds {round(lay_total_odds,2)} outside of allowed window {round(min_lay_total_odds,2)} - {round(max_lay_total_odds,2)}')
                     continue
 
                 df = df.loc[~df.index.str.startswith('_')]

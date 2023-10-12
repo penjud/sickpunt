@@ -104,9 +104,9 @@ function Strategy() {
 
     // Additional Validation: Either Lay or Back should be selected
     if (
-      data.minBackTotalOdds === undefined || data.maxBackTotalOdds === undefined ||
-      data.minLayTotalOdds === undefined || data.maxLayTotalOdds === undefined ||
-      data.minLastTotalOdds === undefined || data.maxLastTotalOdds === undefined
+      !data.minBackTotalOdds && data.minBackTotalOdds !== 0 || !data.maxBackTotalOdds && data.maxBackTotalOdds !== 0 ||
+      !data.minLayTotalOdds && data.minLayTotalOdds !== 0 || !data.maxLayTotalOdds && data.maxLayTotalOdds !== 0 ||
+      !data.minLastTotalOdds && data.minLastTotalOdds !== 0 || !data.maxLastTotalOdds && data.maxLastTotalOdds !== 0
     ) {
       displayAlert('Please enter values for all minimum and maximum total odds', 'danger');
       return;

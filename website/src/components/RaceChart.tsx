@@ -52,18 +52,24 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
         );
     }
 
-    const StrategyStatusComponent = ({ strategyStatus }) => (
-        <div className="strategy-status">
-            {/* <h4 style={{ marginBottom: '10px' }}>Strategy Status</h4> */}
-            <ul>
-                {Object.keys(strategyStatus).map((key, index) => (
-                    <li key={index}>
-                        <span>{key}:</span> <span>{strategyStatus[key]}</span>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
+    const StrategyStatusComponent = ({ strategyStatus }) => {
+        if (!strategyStatus || typeof strategyStatus !== 'object') {
+            return <div>Error: Strategy status is not available</div>;
+        }
+    
+        return (
+            <div className="strategy-status">
+                <ul>
+                    {Object.keys(strategyStatus).map((key) => (
+                        <li key={key}>
+                            <span>{key}:</span> <span>{strategyStatus[key]}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        );
+    }
+    
     
     
 
