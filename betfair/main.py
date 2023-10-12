@@ -76,20 +76,18 @@ async def get_orders():
 @app.post("/load_strategy")
 async def load_strategy(strategy_name: str):
     strategy_data = strategy_collection.find_one(
-        {"StrategyName": strategy_name})
+        {"StrategyName": strategy_name}, {"_id": 0})
 
     if strategy_data:
-        # If found, return the data without the internal _id field
-        return {key: value for key, value in strategy_data.items() if key != "_id"}
+        return strategy_data
     else:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="Strategy not found")
 
 
 @app.post("/get_strategies")
 async def get_strategies():
     # Finding distinct strategy names
-    strategy_names = strategy_collection.distinct(
-        "StrategyName")  # changed from "name" to "strategy_name"
+    strategy_names = strategy_collection.distinct("StrategyName")
     return {"strategies": strategy_names}
 
 
@@ -260,7 +258,8 @@ if __name__ == '__main__':
     def load_strategies(strategies):
         while True:
             loaded_strategies = strategy_collection.find(
-                {"active": {"$in": ["dummy", "on"]}})
+                {"active": {"$in": ["dummy", "on"]}}, {"_id": 0}
+            )
             for strategy in loaded_strategies:
                 strategies[strategy["StrategyName"]] = strategy
             time.sleep(60)

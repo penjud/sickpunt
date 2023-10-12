@@ -290,3 +290,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 items.json
+default*.log.*
+*.log

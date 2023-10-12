@@ -1,15 +1,14 @@
 import copy
+import logging
 import threading
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import pytz
-from betfair.config import is_prod_computer
 
 from betfair.betting import place_order, price_adjustment
-from betfair.config import orders_collection
-import logging
+from betfair.config import is_prod_computer, orders_collection
 
 log = logging.getLogger(__name__)
 
@@ -35,37 +34,38 @@ class StrategyHandler:
             active = strategy.get('active', 'off')
             price_max_value = strategy.get('priceMaxValue', 1000)
             price_min_value = strategy.get('priceMinValue', 1.01)
-            min_last_total_odds = strategy.get('minLastTotalOdds', 0)
-            max_last_total_odds = strategy.get('maxLastTotalOdds', 1000)
-            min_back_total_odds = strategy.get('minBackTotalOdds', 0)
-            max_back_total_odds = strategy.get('maxBackTotalOdds', 1000)
-            min_lay_total_odds = strategy.get('minLayTotalOdds', 0)
-            max_lay_total_odds = strategy.get('maxLayTotalOdds', 1000)
+            min_last_total_odds = float(strategy.get('minLastTotalOdds', 0))
+            max_last_total_odds = float(strategy.get('maxLastTotalOdds', 1000))
+            min_back_total_odds = float(strategy.get('minBackTotalOdds', 0))
+            max_back_total_odds = float(strategy.get('maxBackTotalOdds', 1000))
+            min_lay_total_odds = float(strategy.get('minLayTotalOdds', 0))
+            max_lay_total_odds = float(strategy.get('maxLayTotalOdds', 1000))
 
             for market_id, race_data in ff_copy.items():
-                strategy_race_order_count = len([order for order in ff_copy[market_id]['_orders'] if order.get('strategy_name') == strategy_name])
-                if strategy_race_order_count>=max_horses_to_bet:
+                strategy_race_order_count = len(
+                    [order for order in ff_copy[market_id]['_orders'] if order.get('strategy_name') == strategy_name])
+                if strategy_race_order_count >= max_horses_to_bet:
                     update_strategy_status(
                         ff, market_id, strategy_name, comment=f'Already bet on {max_horses_to_bet} horses.')
                     continue
-                
+
                 with lock:
                     race_data2 = copy.copy(race_data)
                     race_dict2 = copy.copy(race_dict)
-                
+
                 if not race_data2['_seconds_to_start']:
                     continue  # data not yet available
-                
+
                 country = race_dict2[market_id]['event']['countryCode']
                 strategy_countries = strategy['selectedCountries']
                 if not country in strategy_countries:
                     update_strategy_status(
                         ff, market_id, strategy_name, comment=f'Country {country} not part of strategy countries {strategy_countries}')
                     continue
-                
-                if not (strategy['secsToStartSlider'][0] <= -race_data2['_seconds_to_start'] <= strategy['secsToStartSlider'][1]):
-                    update_strategy_status(
-                        ff, market_id, strategy_name, comment='Time window not met')
+
+                # if not (strategy['secsToStartSlider'][0] <= -race_data2['_seconds_to_start'] <= strategy['secsToStartSlider'][1]):
+                #     update_strategy_status(
+                #         ff, market_id, strategy_name, comment='Time window not met')
                     continue
                 order_found = False
 
@@ -76,20 +76,18 @@ class StrategyHandler:
                 last_total_odds = df.loc['_last_overrun'].iloc[0]
                 back_total_odds = df.loc['_back_overrun'].iloc[0]
                 lay_total_odds = df.loc['_lay_overrun'].iloc[0]
-                
-                try:
-                    if not(float(min_last_total_odds) <= last_total_odds <= float(max_last_total_odds)):
-                        update_strategy_status(ff, market_id, strategy_name, comment=f'Total last odds {last_total_odds} outside of allowed window')
-                        continue
-                    if not(float(min_back_total_odds) <= back_total_odds <= float(max_back_total_odds)):
-                        update_strategy_status(ff, market_id, strategy_name, comment=f'Total back odds {back_total_odds} outside of allowed window')
-                        continue
-                    if not(float(min_lay_total_odds) <= lay_total_odds <= float(max_lay_total_odds)):
-                        update_strategy_status(ff, market_id, strategy_name, comment=f'Total lay odds {lay_total_odds} outside of allowed window')
-                        continue
-                except ValueError as err:
-                    log.warning(err)
-                    update_strategy_status(ff, market_id, strategy_name, comment='Value Error in min/max total odds. Check the values')
+
+                if not ((min_last_total_odds) <= last_total_odds <= (max_last_total_odds)):
+                    update_strategy_status(
+                        ff, market_id, strategy_name, comment=f'Total last odds {last_total_odds} outside of allowed window')
+                    continue
+                if not ((min_back_total_odds) <= back_total_odds <= (max_back_total_odds)):
+                    update_strategy_status(
+                        ff, market_id, strategy_name, comment=f'Total back odds {back_total_odds} outside of allowed window')
+                    continue
+                if not ((min_lay_total_odds) <= lay_total_odds <= (max_lay_total_odds)):
+                    update_strategy_status(
+                        ff, market_id, strategy_name, comment=f'Total lay odds {lay_total_odds} outside of allowed window')
                     continue
 
                 df = df.loc[~df.index.str.startswith('_')]
@@ -98,10 +96,12 @@ class StrategyHandler:
                 try:
                     df = df.sort_values(price_strategy, ascending=ascending)
                 except KeyError:
-                    log.warning(f"Price strategy {price_strategy} not found in data")
-                    update_strategy_status(ff, market_id, strategy_name, comment='Price strategy not found in data')
+                    log.warning(
+                        f"Price strategy {price_strategy} not found in data")
+                    update_strategy_status(
+                        ff, market_id, strategy_name, comment='Price strategy not found in data')
                     continue
-                
+
                 df = df.head(max_horses_to_bet)
 
                 for selection_id, horse in df.iterrows():
@@ -109,30 +109,31 @@ class StrategyHandler:
                     # check for selected conditions in strategy
                     condition_met = True
                     horse_info_dict = horse['_horse_info']
-                    for strategy_item in strategy:   # can be limited to condition items
-                        if not ('min' in strategy_item and 'max' in strategy_item):
+                    for item_name, item_value in strategy.items():
+                        if not isinstance(item_value, dict): # can be limited to condition items
                             continue
-                        if strategy_item not in horse_info_dict:
+                        if (not horse_info_dict) or (item_name not in horse_info_dict.keys()):
                             if strategy['missingConditionsData'] == "risk":
                                 continue
                             else:
                                 condition_met = False
                                 update_strategy_status(
-                                    ff, market_id, strategy_name, selection_id, comment=f'{strategy_item} not found in data')
+                                    ff, market_id, strategy_name, selection_id, comment=f'{item_name} not found in data')
                                 break
-                            
-                        if not (float(strategy_item['min']) <= float(horse_info_dict[strategy_item]) <= float(strategy_item['max'])):
+
+                        if not (float(item_value['min']) <= float(horse_info_dict[item_name]) <= float(item_value['max'])):
                             condition_met = False
                             update_strategy_status(
-                                ff, market_id, strategy_name, selection_id, comment=f'{strategy_item} condition not met')
+                                ff, market_id, strategy_name, selection_id, comment=f'{item_name} condition not met')
 
                     if not condition_met:
                         continue
 
                     price = horse[price_strategy]
-                    price = min(max(price, float(price_min_value)), float(price_max_value))
+                    price = min(max(price, float(price_min_value)),
+                                float(price_max_value))
                     price = price_adjustment(price)
-                    
+
                     try:
                         horse_name = runnerid_name_dict[int(selection_id)]
                     except KeyError:
@@ -147,7 +148,8 @@ class StrategyHandler:
                                     # log.info(f"Already have an order for {selection_id} in {market_id}")
                                     order_found = True
                             if order_found:
-                                update_strategy_status(ff, market_id, strategy_name, selection_id, comment='Order already placed')
+                                update_strategy_status(
+                                    ff, market_id, strategy_name, selection_id, comment='Order already placed')
                                 continue
 
                         status, bet_id, average_price_matched = 'dummy', 'dummy', 'dummy'

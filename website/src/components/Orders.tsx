@@ -1,16 +1,21 @@
-import { useEffect, useState } from 'react';
-import './Orders.css';
-import { API_URL } from '../helper/Constants';
+import CircularProgress from '@mui/material/CircularProgress';
 import axios from 'axios';
-import CircularProgress from '@mui/material/CircularProgress';  // <-- Import this
+import { useEffect, useState } from 'react';
+import { API_URL } from '../helper/Constants';
+import './Orders.css';
 
 function OrdersTable() {
     const [orders, setOrders] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);  // <-- Add this line
+    const [isLoading, setIsLoading] = useState(true);
+    const [sortKey, setSortKey] = useState('timestamp');  // <-- Add this line for sorting
+    const [isSortAscending, setIsSortAscending] = useState(false); // <-- Add this line for sorting direction
+    const [filter, setFilter] = useState('');  // <-- Add this line for filtering
+    const [isManuallySorted, setIsManuallySorted] = useState(false);
+
 
     useEffect(() => {
         const intervalId = setInterval(() => {
-            axios.post(`http://${API_URL}/orders`, 
+            axios.post(`http://${API_URL}/orders`,
                 {
                     headers: {
                         'Content-Type': 'application/json',
@@ -18,8 +23,14 @@ function OrdersTable() {
                 }
             )
             .then(response => {
-                setOrders(response.data);
-                setIsLoading(false);  // <-- Set loading to false when data is received
+                let sortedData;
+                if (!isManuallySorted) {
+                    sortedData = response.data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+                } else {
+                    sortedData = response.data;
+                }
+                setOrders(sortedData);
+                setIsLoading(false);
             })
             .catch(error => {
                 console.error('Error fetching orders:', error);
@@ -27,35 +38,64 @@ function OrdersTable() {
         }, 10000);
     
         return () => clearInterval(intervalId);
-    }, []);
+    }, [isManuallySorted]);
+
+    const handleSort = (key) => {
+        setIsManuallySorted(true);
+        const sortedData = [...orders].sort((a, b) => {
+            const valA = key === 'timestamp' ? new Date(a[key]).getTime() : a[key];
+            const valB = key === 'timestamp' ? new Date(b[key]).getTime() : b[key];
+    
+            if (valA < valB) return isSortAscending ? -1 : 1;
+            if (valA > valB) return isSortAscending ? 1 : -1;
+            return 0;
+        });
+    
+        setOrders(sortedData);
+        setSortKey(key);
+        setIsSortAscending(!isSortAscending);
+    };
+    
+
+    const filteredOrders = orders.filter(order => {
+        return Object.values(order).some(value =>
+            String(value).toLowerCase().includes(filter.toLowerCase())
+        );
+    });
 
     const headers = orders.length > 0 ? Object.keys(orders[0]) : [];
 
     return (
         <div>
-            {isLoading ? (  // <-- Conditional rendering for loading state
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-            <CircularProgress />
-          </div>
+            {isLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+                    <CircularProgress />
+                </div>
             ) : (
-                <table>
-                    <thead>
-                        <tr>
-                            {headers.map(header => (
-                                <th key={header}>{header}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {orders.map(order => (
-                            <tr key={order.id}>
+                <div>
+                    <input type="text" placeholder="Filter..." onChange={(e) => setFilter(e.target.value)} />
+                    <table>
+                        <thead>
+                            <tr>
                                 {headers.map(header => (
-                                    <td key={header}>{order[header]}</td>
+                                    <th key={header} onClick={() => handleSort(header)}>
+                                        {header}
+                                        {sortKey === header && (isSortAscending ? ' ↓': ' ↑' )}
+                                    </th>
                                 ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {filteredOrders.map(order => (
+                                <tr key={order.id}>
+                                    {headers.map(header => (
+                                        <td key={header}>{order[header]}</td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </div>
     );

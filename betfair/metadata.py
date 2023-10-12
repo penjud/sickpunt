@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,
+from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, KEEP_AFTER_RACE_START_MIN, MARKET_TYPES,
                             SECS_MARKET_FETCH_INTERVAL, client,
                             punters_com_au_collection, upsert_event_metadata)
 
@@ -30,7 +30,7 @@ def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_i
         market_filter = {
             'eventTypeIds': EVENT_TYPE_IDS,  # Horse Racing event type ID
             'marketStartTime': {
-                'from': (now - timedelta(minutes=10)).isoformat(),
+                'from': (now - timedelta(minutes=KEEP_AFTER_RACE_START_MIN)).isoformat(),
                 'to': end_time.isoformat()
             },
             'market_types': MARKET_TYPES,

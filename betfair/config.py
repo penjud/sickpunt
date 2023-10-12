@@ -34,6 +34,7 @@ strategy_collection = mongo_db["strategies"]
 COUNTRIES = ['AU', 'UK']
 MARKET_TYPES = ['WIN']
 EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
+KEEP_AFTER_RACE_START_MIN = 60
 
 SERVER_NAMES = ['ip-172-31-35-26.ap-southeast-2.compute.internal']
 

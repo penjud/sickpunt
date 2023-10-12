@@ -103,6 +103,17 @@ function Strategy() {
     }
 
     // Additional Validation: Either Lay or Back should be selected
+    if (
+      data.minBackTotalOdds === undefined || data.maxBackTotalOdds === undefined ||
+      data.minLayTotalOdds === undefined || data.maxLayTotalOdds === undefined ||
+      data.minLastTotalOdds === undefined || data.maxLastTotalOdds === undefined
+    ) {
+      displayAlert('Please enter values for all minimum and maximum total odds', 'danger');
+      return;
+    }
+
+
+    // Additional Validation: Either Lay or Back should be selected
     if (!data.betType) {
       displayAlert('Please select either Lay or Back', 'danger');
       return;
