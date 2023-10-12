@@ -63,9 +63,9 @@ class StrategyHandler:
                         ff, market_id, strategy_name, comment=f'Country {country} not part of strategy countries {strategy_countries}')
                     continue
 
-                # if not (strategy['secsToStartSlider'][0] <= -race_data2['_seconds_to_start'] <= strategy['secsToStartSlider'][1]):
-                #     update_strategy_status(
-                #         ff, market_id, strategy_name, comment='Time window not met')
+                if not (strategy['secsToStartSlider'][0] <= -race_data2['_seconds_to_start'] <= strategy['secsToStartSlider'][1]):
+                    update_strategy_status(
+                        ff, market_id, strategy_name, comment='Time window not met')
                     continue
                 order_found = False
 
