@@ -313,7 +313,6 @@ if __name__ == '__main__':
         ff_cache,), daemon=True)
     t2.start()
 
-    time.sleep(10)
     connect_to_stream()
 
     uvicorn.run(app, host="0.0.0.0", port=7777)
