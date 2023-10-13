@@ -5,17 +5,9 @@ import socket
 import betfairlightweight
 from pymongo import MongoClient
 
-APP_KEY = "mECg2P2ohk92MLXy"
-PASSWORD = r"%2s8ThBv&u5#s$Wg"
-USERNAME = "penjud"
-
-client = betfairlightweight.APIClient(
-    username=USERNAME, password=PASSWORD, app_key=APP_KEY)
-client.login_interactive()
-
-
-HOSTNAME = '3.24.169.161'
-MONGO_USERNAME = "admin"
+USERNAME = "default"
+HOSTNAME = 'localhost'
+MONGO_USERNAME = "sickpunt"
 MONGO_PASSWROD = "sickpunt123"
 MONGO_DB = "horse_racing"  # The database you want to connect to
 MONGO_AUTH_DB = "admin"  # Database where the user is authenticated
@@ -29,6 +21,14 @@ punters_com_au_collection = mongo_db["punters_com_au"]
 tickdata_collection = mongo_db["tickdata"]
 orders_collection = mongo_db["orders"]
 strategy_collection = mongo_db["strategies"]
+admin_collection = mongo_db["user_admin"]
+
+betfair_credentials = list(admin_collection.find(
+    {"Email": USERNAME}, {'_id': False}))[0]
+
+APP_KEY = betfair_credentials['BetfairToken']
+PASSWORD = betfair_credentials['BetfairPassword']
+USERNAME = betfair_credentials['BetfairLogin']
 
 # constants
 COUNTRIES = ['AU', 'UK']
@@ -39,6 +39,10 @@ KEEP_AFTER_RACE_START_MIN = 60
 SERVER_NAMES = ['ip-172-31-35-26.ap-southeast-2.compute.internal']
 
 SECS_MARKET_FETCH_INTERVAL = 60
+
+client = betfairlightweight.APIClient(
+    username=USERNAME, password=PASSWORD, app_key=APP_KEY)
+client.login_interactive()
 
 
 def upsert_event_metadata(race_data):

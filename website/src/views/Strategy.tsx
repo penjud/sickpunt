@@ -84,10 +84,6 @@ function Strategy() {
   };
 
   const saveStrategy = () => {
-
-
-
-    // Validation: Check if strategyName has at least 3 characters
     if (!data.StrategyName) {
       displayAlert('Enter a strategy name under which to save the configuration', 'danger');
       return;
@@ -150,6 +146,7 @@ function Strategy() {
     axios.post(`http://${API_URL}/save_strategy`, { strategy_config: data })
       .then(response => {
         console.log("Response from server:", response.data);
+        load_available_strategies();
         displayAlert('Strategy successfully saved', 'success');
       })
       .catch(error => {
@@ -158,8 +155,7 @@ function Strategy() {
       });
   };
 
-
-  useEffect(() => {
+  const load_available_strategies = () => {
     axios.post(`http://${API_URL}/get_strategies`)
       .then(res => {
         setAvailableStrategies(res.data.strategies || []);
@@ -169,6 +165,11 @@ function Strategy() {
       .catch(error => {
         console.error('Error fetching strategies:', error);
       });
+  }
+
+
+  useEffect(() => {
+    load_available_strategies();
   }, []);
 
 

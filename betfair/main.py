@@ -24,7 +24,7 @@ from requests import request
 from tenacity import retry, wait_exponential
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client,
-                            orders_collection, strategy_collection)
+                            orders_collection, strategy_collection, admin_collection)
 from betfair.helper import init_logger
 from betfair.metadata import get_current_event_metadata
 from betfair.strategy import StrategyHandler
@@ -71,6 +71,28 @@ async def get_orders():
     :return: List of orders
     """
     return list(orders_collection.find({}, {'_id': False}))
+
+@app.post("/load_admin")
+async def load_admin():
+    return list(admin_collection.find({"Email": "default"}, {'_id': False}))[0]
+
+@app.post("/save_admin")
+async def save_admin(admin_dict: Dict):
+    try:
+        # Extract strategy name for the upsert filter
+        admin_dict = admin_dict['admin_dict']
+        email = admin_dict.get("Email")
+
+        filter_query = {'Email': email}
+        update_query = {'$set': admin_dict}
+
+        # Assuming you're using pymongo to interact with MongoDB
+        admin_collection.update_one(filter_query, update_query, upsert=True)
+
+        return {"message": "Admin successfully saved"}
+
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.post("/load_strategy")
@@ -126,15 +148,6 @@ async def save_strategy(strategy_config: Dict):
 
     except Exception as e:
         return {"error": str(e)}
-
-        # Perform upsert operation (Replace 'strategy_collection' with your MongoDB collection)
-        strategy_collection.update_one(filter_query, update_query, upsert=True)
-
-        return {"message": "Strategy successfully upserted"}
-
-    except Exception as e:
-        log.error(f"An error occurred: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @app.websocket("/ff_cache")
@@ -262,7 +275,7 @@ if __name__ == '__main__':
             )
             for strategy in loaded_strategies:
                 strategies[strategy["StrategyName"]] = strategy
-            time.sleep(60)
+            time.sleep(10)
 
     def update_remaining_time(ff_cache):
         while True:

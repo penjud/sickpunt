@@ -67,7 +67,6 @@ class StrategyHandler:
                     update_strategy_status(
                         ff, market_id, strategy_name, comment='Time window not met')
                     continue
-                order_found = False
 
                 if '_orders' in race_data2:
                     del race_data2['_orders']
@@ -107,6 +106,7 @@ class StrategyHandler:
                 for selection_id, horse in df.iterrows():
 
                     # check for selected conditions in strategy
+                    order_found = False
                     condition_met = True
                     horse_info_dict = horse['_horse_info']
                     for item_name, item_value in strategy.items():
@@ -145,7 +145,6 @@ class StrategyHandler:
                         if orders:
                             for order in orders:
                                 if order['selection_id'] == selection_id:
-                                    # log.info(f"Already have an order for {selection_id} in {market_id}")
                                     order_found = True
                             if order_found:
                                 update_strategy_status(
@@ -153,7 +152,7 @@ class StrategyHandler:
                                 continue
 
                         status, bet_id, average_price_matched = 'dummy', 'dummy', 'dummy'
-                        if active == 'on' and is_prod_computer():
+                        if active == 'on': # and is_prod_computer():
                             log.info(
                                 {f"Sending to betfair: {strategy_name} {bet_type} {bet_size} {price} {selection_id} {market_id}"})
                             status, bet_id, average_price_matched = place_order(market_id, selection_id, bet_size, price,
@@ -165,6 +164,9 @@ class StrategyHandler:
                                  'selection_id': selection_id,
                                  'horse_name': horse_name,
                                  'price': price,
+                                 'last_traded': horse['last'],
+                                 'last_lay': horse['lay'],
+                                 'last_back': horse['back'],
                                  'side': bet_type,
                                  'persistence_type': persistent_type,
                                  'timestamp': datetime.now().isoformat()[:19],

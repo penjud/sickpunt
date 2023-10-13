@@ -3,10 +3,8 @@ import Slider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
-
 const TimeBeforeRaceSlider = ({ data, handleChange }) => {
     const [value, setValue] = useState([-3600, 600]);
-  
 
     useEffect(() => {
       if (data.secsToStartSlider && data.secsToStartSlider.length === 2) {
@@ -14,8 +12,13 @@ const TimeBeforeRaceSlider = ({ data, handleChange }) => {
       }
     }, [data]);
 
+    const handleInputChange = (index, event) => {
+      const newVal = [...value];
+      newVal[index] = Number(event.target.value) || 0;
+      setValue(newVal);
+      handleChange('secsToStartSlider', newVal);
+    };
 
-  
     return (
       <Box sx={{ width: 500 }}>
         <Typography id="range-slider" gutterBottom>
@@ -38,11 +41,22 @@ const TimeBeforeRaceSlider = ({ data, handleChange }) => {
           ]}
         />
         <div>
-          From: {value[0]} seconds to {value[1]} seconds relative to start of race.
+          From: 
+          <input 
+            type="number"
+            value={value[0]}
+            onChange={(e) => handleInputChange(0, e)}
+          />
+          seconds to 
+          <input 
+            type="number"
+            value={value[1]}
+            onChange={(e) => handleInputChange(1, e)}
+          />
+          seconds relative to start of race.
         </div>
       </Box>
     );
-  }
-  
-  export default TimeBeforeRaceSlider;
-  
+}
+
+export default TimeBeforeRaceSlider;

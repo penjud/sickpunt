@@ -6,14 +6,14 @@ import './Strategy.css';
 
 
 interface IAttributesConfig {
-  active: string;
-  StrategyName: string;
+  UserName: string;
 }
 
 const defaultAttributesConfig: IAttributesConfig = {
-  active: "off",
-  StrategyName: "",
+  UserName: "default",
 };
+
+
 
 
 function Admin() {
@@ -48,7 +48,7 @@ function Admin() {
 
   const saveAdmin = () => {
     // Validation: Check if strategyName has at least 3 characters
-    if (!data.StrategyName) {
+    if (!data.UserName) {
       displayAlert('Enter a strategy name under which to save the configuration', 'danger');
       return;
     }
@@ -60,42 +60,49 @@ function Admin() {
     }
 
     // Log payload to the console
-    console.log("Saving strategy with the following configuration:", data);
+    // console.log("Saving strategy with the following configuration:", data);
 
     // Make POST request to /save
-    axios.post(`http://${API_URL}/save_admin`, { strategy_config: data })
+    axios.post(`http://${API_URL}/save_admin`, { admin_dict: data })
       .then(response => {
         console.log("Response from server:", response.data);
-        displayAlert('Strategy successfully saved', 'success');
+        displayAlert('Saved successfully', 'success');
       })
       .catch(error => {
-        console.error("Error saving strategy:", error);
-        displayAlert('Failed to save strategy', 'danger');
+        console.error("Error saving Admin:", error);
+        displayAlert('Failed to save', 'danger');
       });
   };
 
 
   const loadAdmin = () => {
-    console.log("Loading Strategy:", selectedStrategy);  // Debug log
 
     // Initialize data with defaultAttributesConfig
     setData(defaultAttributesConfig);
     console.log("data before loading:", data)
 
-    axios.post(`http://${API_URL}/load_admin`, null, { params: { strategy_name: selectedStrategy } })
+    axios.post(`http://${API_URL}/load_admin`, null)
       .then(res => {
         // Merge the default attributes with the loaded strategy data
         const mergedData = { ...defaultAttributesConfig, ...res.data };
 
         // Update the state to re-render your component
         setData(mergedData);
-        displayAlert('Strategy loaded', 'success');
+        console.log(mergedData);
+        displayAlert('Admin loaded', 'success');
       })
       .catch(error => {
-        console.error('Error loading strategy:', error);
-        displayAlert('Failed to load strategy', 'danger');
+        console.error('Error loading admin:', error);
+        displayAlert('Failed to load admin', 'danger');
       });
   };
+
+  // Load data on startup of page mount
+  useEffect(() => {
+    loadAdmin();
+  }, []);
+
+
 
 
   const handleChange = (attr: keyof IAttributesConfig, value: any) => {
@@ -107,26 +114,33 @@ function Admin() {
     <div className="strategy-form">
       <h2>Admin</h2>
 
-
-      {/* Strategy Name */}
       <div className="strategy-name">
-        <label>Mongodb IP</label>
-        <input type="text" value={data.StrategyName} onChange={(e) => handleChange('StrategyName', e.target.value)} />
+        <label>Usernamne</label>
+        <input type="text" value={data.Email} onChange={(e) => handleChange('Email', e.target.value)} />
+      </div>
+
+      <div className="strategy-name">
+        <label>Passwword</label>
+        <input type="password" value={data.UserPassword} onChange={(e) => handleChange('UserPassword', e.target.value)} />
+      </div>
+      <div className="strategy-name">
+        <label>Server Address</label>
+        <input type="text" value={data.ServerAddress} onChange={(e) => handleChange('ServerAddress', e.target.value)} />
       </div>
 
       <div className="strategy-name">
         <label>Betfair Login</label>
-        <input type="text" value={data.StrategyName} onChange={(e) => handleChange('StrategyName', e.target.value)} />
+        <input type="text" value={data.BetfairLogin} onChange={(e) => handleChange('BetfairLogin', e.target.value)} />
       </div>
 
       <div className="strategy-name">
         <label>Betfair Password</label>
-        <input type="text" value={data.StrategyName} onChange={(e) => handleChange('StrategyName', e.target.value)} />
+        <input type="password" value={data.BetfairPassword} onChange={(e) => handleChange('BetfairPassword', e.target.value)} />
       </div>
 
       <div className="strategy-name">
         <label>Betfair Token</label>
-        <input type="text" value={data.StrategyName} onChange={(e) => handleChange('StrategyName', e.target.value)} />
+        <input type="password" value={data.BetfairToken} onChange={(e) => handleChange('BetfairToken', e.target.value)} />
       </div>
 
 
@@ -145,7 +159,7 @@ function Admin() {
 
       {/* Submit button */}
       <div className="submit-btn">
-        <button onClick={saveAdmin}>Save</button> {/* Invoke saveStrategy when clicked */}
+        <button onClick={saveAdmin}>Save</button> 
       </div>
     </div>
   );

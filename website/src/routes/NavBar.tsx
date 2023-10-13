@@ -20,9 +20,9 @@ function NavBar() {
                     <li className="nav-item">
                         <Link className="nav-link" to="/strategyeditor">Strategies</Link>
                     </li>
-                    {/* <li className="nav-item">
+                    <li className="nav-item">
                         <Link className="nav-link" to="/admin">Admin</Link>
-                    </li> */}
+                    </li>
                 </ul>
             </div>
         </nav>
