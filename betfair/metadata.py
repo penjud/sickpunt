@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import re
@@ -6,7 +7,8 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, KEEP_AFTER_RACE_START_MIN, MARKET_TYPES,
+from betfair.config import (COUNTRIES, EVENT_TYPE_IDS,
+                            KEEP_AFTER_RACE_START_MIN, MARKET_TYPES,
                             SECS_MARKET_FETCH_INTERVAL, client,
                             punters_com_au_collection, upsert_event_metadata)
 
@@ -14,14 +16,14 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict):
+async def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict):
     while True:  # Repeat indefinitely
         # Get the current time and the time 60 minutes from now
         try:
             client.login_interactive()
         except:
             print("Interactive login failed. Trying again in 1min.")
-            time.sleep(60)
+            await asyncio.sleep(60)
         now = datetime.utcnow()
         end_time = now + timedelta(days=1)
         race_datas = []
@@ -54,11 +56,11 @@ def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_i
             race_ids.add(race_data['marketId'])
             current_races.add(race_data['marketId'])
             race_dict[race_data['marketId']] = {'start_time': datetime.fromisoformat(
-                race_data['marketStartTime']).replace(tzinfo=pytz.utc), 
-                                                'runners': race_data['runners'],
-                                                'event': race_data['event'],
-                                                'marketName': race_data['marketName'],
-                                                'totalMatched': race_data['totalMatched']}
+                race_data['marketStartTime']).replace(tzinfo=pytz.utc),
+                'runners': race_data['runners'],
+                'event': race_data['event'],
+                'marketName': race_data['marketName'],
+                'totalMatched': race_data['totalMatched']}
 
             race_data_available.set()
 
@@ -87,4 +89,4 @@ def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_i
         for horse in horse_infos:
             horse_info_dict[horse['Horse Name']] = horse
 
-        time.sleep(SECS_MARKET_FETCH_INTERVAL)
+        await asyncio.sleep(SECS_MARKET_FETCH_INTERVAL)

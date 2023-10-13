@@ -23,8 +23,9 @@ from pydantic import BaseModel, Field
 from requests import request
 from tenacity import retry, wait_exponential
 
-from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES, client,
-                            orders_collection, strategy_collection, admin_collection)
+from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,
+                            admin_collection, client, orders_collection,
+                            strategy_collection)
 from betfair.helper import init_logger
 from betfair.metadata import get_current_event_metadata
 from betfair.strategy import StrategyHandler
@@ -72,9 +73,11 @@ async def get_orders():
     """
     return list(orders_collection.find({}, {'_id': False}))
 
+
 @app.post("/load_admin")
 async def load_admin():
     return list(admin_collection.find({"Email": "default"}, {'_id': False}))[0]
+
 
 @app.post("/save_admin")
 async def save_admin(admin_dict: Dict):
@@ -193,7 +196,7 @@ async def last_prices(websocket: WebSocket):
             log.error(f"Offending data: {converted_ff_cache}")
             # Optionally, re-raise the exception if you want the error to propagate
             # raise
-        await asyncio.sleep(.2)
+        await asyncio.sleep(0)
 
 
 class StreamWithReconnect(threading.Thread):
@@ -226,7 +229,7 @@ class StreamWithReconnect(threading.Thread):
             raise
 
 
-def connect_to_stream():
+async def connect_to_stream():
     # Assuming 'client' and all filter variables are already defined
     listener = HorseRaceListener(
         ff_cache, race_ids, last_cache, race_dict,
@@ -248,6 +251,58 @@ def connect_to_stream():
     stream_thread.start()
 
 
+async def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies):
+    while True:
+        strategy_handler.check_execute(
+            last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
+        strategy_handler.check_modify(
+            last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
+        await asyncio.sleep(0)
+
+
+async def load_strategies(strategies):
+    while True:
+        loaded_strategies = strategy_collection.find(
+            {"active": {"$in": ["dummy", "on"]}}, {"_id": 0}
+        )
+        for strategy in loaded_strategies:
+            strategies[strategy["StrategyName"]] = strategy
+        await asyncio.sleep(10)
+
+
+async def update_remaining_time(ff_cache):
+    while True:
+        lock = threading.Lock()
+        with lock:
+            ff_copy = copy.copy(ff_cache)
+        for market_id, race_data in ff_copy.items():
+            ff = ff_cache
+            try:
+                iso_format_string = ff[market_id]['_race_start_time']
+                race_start_time = datetime.fromisoformat(iso_format_string)
+                race_data['_seconds_to_start'] = (
+                    race_start_time - datetime.utcnow().replace(tzinfo=pytz.utc)).total_seconds()
+                ff[market_id]['_seconds_to_start'] = race_data['_seconds_to_start']
+            except TypeError:
+                log.error(
+                    "TypeError in update_remaining_time, no starttime")
+        await asyncio.sleep(.5)
+
+
+@app.on_event("startup")
+async def startup_event():
+    loop = asyncio.get_event_loop()
+    try:
+        loop.create_task(get_current_event_metadata(
+            race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict))
+        loop.create_task(load_strategies(strategies))
+        loop.create_task(check_strategy(last_cache, ff_cache,
+                         race_dict, runnerid_name_dict, strategies))
+        loop.create_task(update_remaining_time(ff_cache))
+        loop.create_task(connect_to_stream())
+    except Exception as e:
+        log.critical(f"Error during startup: {e}")
+
 if __name__ == '__main__':
     strategy_handler = StrategyHandler()
     race_ids = set()
@@ -259,60 +314,5 @@ if __name__ == '__main__':
     strategies = dict()
     ff_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     last_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
-
-    def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies):
-        while True:
-            strategy_handler.check_execute(
-                last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
-            strategy_handler.check_modify(
-                last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
-            # time.sleep(1)
-
-    def load_strategies(strategies):
-        while True:
-            loaded_strategies = strategy_collection.find(
-                {"active": {"$in": ["dummy", "on"]}}, {"_id": 0}
-            )
-            for strategy in loaded_strategies:
-                strategies[strategy["StrategyName"]] = strategy
-            time.sleep(10)
-
-    def update_remaining_time(ff_cache):
-        while True:
-            lock = threading.Lock()
-            with lock:
-                ff_copy = copy.copy(ff_cache)
-            for market_id, race_data in ff_copy.items():
-                ff = ff_cache
-                try:
-                    iso_format_string = ff[market_id]['_race_start_time']
-                    race_start_time = datetime.fromisoformat(iso_format_string)
-                    race_data['_seconds_to_start'] = (
-                        race_start_time - datetime.utcnow().replace(tzinfo=pytz.utc)).total_seconds()
-                    ff[market_id]['_seconds_to_start'] = race_data['_seconds_to_start']
-                except TypeError:
-                    log.error(
-                        "TypeError in update_remaining_time, no starttime")
-            time.sleep(.5)
-
-    # create a new thread and start it
-    t = threading.Thread(target=lambda: get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict),
-                         daemon=True)
-    t.start()
-
-    t0 = threading.Thread(target=load_strategies,
-                          args=(strategies,), daemon=True)
-    t0.start()
-    time.sleep(1)
-
-    t1 = threading.Thread(target=check_strategy, args=(
-        last_cache, ff_cache, race_dict, runnerid_name_dict, strategies), daemon=True)
-    t1.start()
-
-    t2 = threading.Thread(target=update_remaining_time, args=(
-        ff_cache,), daemon=True)
-    t2.start()
-
-    connect_to_stream()
 
     uvicorn.run(app, host="0.0.0.0", port=7777)
