@@ -4,7 +4,6 @@ import copy
 import json
 import logging
 import queue
-import threading
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -30,6 +29,9 @@ from betfair.helper import init_logger
 from betfair.metadata import get_current_event_metadata
 from betfair.strategy import StrategyHandler
 from betfair.streamer import HorseRaceListener
+
+lock = asyncio.Lock()
+
 
 init_logger(screenlevel=logging.INFO, filename='default')
 
@@ -199,32 +201,31 @@ async def last_prices(websocket: WebSocket):
         await asyncio.sleep(0)
 
 
-class StreamWithReconnect(threading.Thread):
+class StreamWithReconnect:
     def __init__(self, client, listener, market_filter, market_data_filter):
-        super().__init__(daemon=True)
         self.client = client
         self.listener = listener
         self.market_filter = market_filter
         self.market_data_filter = market_data_filter
         self.stream = None
-        self.output_queue = queue.Queue()
+        self.output_queue = asyncio.Queue()
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=30))
-    def run(self):
+    async def run(self):
         log.info("Starting StreamWithReconnect")
+        loop = asyncio.get_event_loop()
+
         try:
-            self.stream = self.client.streaming.create_stream(
-                listener=self.listener
-            )
-            self.stream.subscribe_to_markets(
-                market_filter=self.market_filter,
-                market_data_filter=self.market_data_filter
-            )
-            self.stream.start()
-        except SocketError as err:
-            log.error(f"SocketError occurred: {err}")
-            raise
-        except Exception as e:
+            # If the create_stream method is synchronous
+            self.stream = await loop.run_in_executor(None, lambda: self.client.streaming.create_stream(listener=self.listener))
+
+            # If the subscribe_to_markets method is synchronous
+            await loop.run_in_executor(None, lambda: self.stream.subscribe_to_markets(market_filter=self.market_filter, market_data_filter=self.market_data_filter))
+
+            # If the start method is synchronous
+            await loop.run_in_executor(None, self.stream.start)
+
+        except Exception as e:  # Adjust the exception types as needed
             log.critical(f"Unhandled exception: {e}")
             raise
 
@@ -245,17 +246,17 @@ async def connect_to_stream():
         ladder_levels=3
     )
 
-    stream_thread = StreamWithReconnect(
+    stream_with_reconnect = StreamWithReconnect(
         client, listener, market_filter, market_data_filter
     )
-    stream_thread.start()
+    await stream_with_reconnect.run()
 
 
 async def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies):
     while True:
-        strategy_handler.check_execute(
+        await strategy_handler.check_execute(
             last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
-        strategy_handler.check_modify(
+        await strategy_handler.check_modify(
             last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
         await asyncio.sleep(0)
 
@@ -272,8 +273,7 @@ async def load_strategies(strategies):
 
 async def update_remaining_time(ff_cache):
     while True:
-        lock = threading.Lock()
-        with lock:
+        async with lock:
             ff_copy = copy.copy(ff_cache)
         for market_id, race_data in ff_copy.items():
             ff = ff_cache

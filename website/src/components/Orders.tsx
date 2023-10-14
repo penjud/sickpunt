@@ -12,7 +12,6 @@ function OrdersTable() {
     const [filter, setFilter] = useState('');  // <-- Add this line for filtering
     const [isManuallySorted, setIsManuallySorted] = useState(false);
 
-
     useEffect(() => {
         const intervalId = setInterval(() => {
             axios.post(`http://${API_URL}/orders`,

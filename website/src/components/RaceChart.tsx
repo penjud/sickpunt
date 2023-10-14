@@ -33,7 +33,7 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
                 setIsHighlighted(true);
                 timer = setTimeout(() => {
                     setIsHighlighted(false);
-                }, 1000);
+                }, 300);
             }
 
             return () => {
