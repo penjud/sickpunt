@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import logging
 import threading
@@ -11,15 +12,14 @@ from betfair.betting import place_order, price_adjustment
 from betfair.config import is_prod_computer, orders_collection
 
 log = logging.getLogger(__name__)
-
+lock = asyncio.Lock()
 
 class StrategyHandler:
     def __init__(self) -> None:
         pass
 
-    def check_execute(self, last, ff, race_dict, runnerid_name_dict, strategies) -> bool:
-        lock = threading.Lock()
-        with lock:
+    async def check_execute(self, last, ff, race_dict, runnerid_name_dict, strategies) -> bool:
+        async with lock:
             ff_copy = copy.copy(ff)
             strategies_copy = copy.copy(strategies)
         for _, strategy in strategies_copy.items():
@@ -49,7 +49,7 @@ class StrategyHandler:
                         ff, market_id, strategy_name, comment=f'Already bet on {max_horses_to_bet} horses.')
                     continue
 
-                with lock:
+                async with lock:
                     race_data2 = copy.copy(race_data)
                     race_dict2 = copy.copy(race_dict)
 
@@ -182,7 +182,7 @@ class StrategyHandler:
                             ff[market_id]['_orders'] = [order]
                         orders_collection.insert_one(copy.copy(order))
 
-    def check_modify(self, last, ff, race_dict, runnerid_name_dict, strategies):
+    async def check_modify(self, last, ff, race_dict, runnerid_name_dict, strategies):
         pass
 
 
