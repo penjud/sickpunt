@@ -18,12 +18,20 @@ class RacesSpider(scrapy.Spider):
     allowed_domains = ['punters.com.au']
 
     def start_requests(self):
-        url = 'http://www.punters.com.au/'
+        url = 'https://www.punters.com.au/form-guide/'
         yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        urls = response.xpath(
-            "//div[@class='next-to-jump-horizontal__main punters-generic-component__main']/a/@href").extract()
+        urls = []
+        for td in response.xpath('//td[@class="upcoming-race__td upcoming-race__event"]'):
+            # Extract the href attribute of the <a> tag using XPath
+            rel_url = td.xpath('.//a[@class="upcoming-race__event-link"]/@href').get()
+            # Construct the full URL
+            full_url = response.urljoin(rel_url)
+            
+            # Output or further process the extracted URL
+            print(f"Extracted URL: {full_url}")
+            urls.append(full_url)
 
         # Overview site
         for url in urls:
