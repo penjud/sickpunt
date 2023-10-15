@@ -34,12 +34,6 @@ class StrategyHandler:
             active = strategy.get('active', 'off')
             price_max_value = strategy.get('priceMaxValue', 1000)
             price_min_value = strategy.get('priceMinValue', 1.01)
-            min_last_total_odds = float(strategy.get('minLastTotalOdds', 0))
-            max_last_total_odds = float(strategy.get('maxLastTotalOdds', 1000))
-            min_back_total_odds = float(strategy.get('minBackTotalOdds', 0))
-            max_back_total_odds = float(strategy.get('maxBackTotalOdds', 1000))
-            min_lay_total_odds = float(strategy.get('minLayTotalOdds', 0))
-            max_lay_total_odds = float(strategy.get('maxLayTotalOdds', 1000))
 
             for market_id, race_data in ff_copy.items():
                 strategy_race_order_count = len(
@@ -81,19 +75,6 @@ class StrategyHandler:
                 back_total_odds = df.loc['_back_overrun'].iloc[0]
                 lay_total_odds = df.loc['_lay_overrun'].iloc[0]
 
-                if not ((min_last_total_odds) <= last_total_odds <= (max_last_total_odds)):
-                    update_strategy_status(
-                        ff, market_id, strategy_name, comment=f'Total last odds {round(last_total_odds,2)} outside of allowed window {round(min_last_total_odds,2)} - {round(max_last_total_odds,2)}')
-                    continue
-                if not ((min_back_total_odds) <= back_total_odds <= (max_back_total_odds)):
-                    update_strategy_status(
-                        ff, market_id, strategy_name, comment=f'Total back odds {round(back_total_odds,2)} outside of allowed window {round(min_back_total_odds,2)} - {round(max_back_total_odds,2)}')
-                    continue
-                if not ((min_lay_total_odds) <= lay_total_odds <= (max_lay_total_odds)):
-                    update_strategy_status(
-                        ff, market_id, strategy_name, comment=f'Total lay odds {round(lay_total_odds,2)} outside of allowed window {round(min_lay_total_odds,2)} - {round(max_lay_total_odds,2)}')
-                    continue
-
                 df = df.loc[~df.index.str.startswith('_')]
 
                 ascending = True if max_horses_to_bet_strategy == 'highest odds first' else False
@@ -119,6 +100,10 @@ class StrategyHandler:
                     horse_info_dict['Last Traded price'] = horse['last']
                     horse_info_dict['Current lay price'] = horse['lay']
                     horse_info_dict['Current back price'] = horse['back']
+                    
+                    horse_info_dict['Last total odds'] = last_total_odds
+                    horse_info_dict['Back total odds'] = back_total_odds
+                    horse_info_dict['Lay total odds'] = lay_total_odds
                     
                     for item_name, item_value in strategy.items():
                         if not isinstance(item_value, dict): # can be limited to condition items

@@ -18,12 +18,7 @@ interface IAttributesConfig {
   priceMaxValue: number;
   maxHorsesToBet: number;
   maxHorsesToBetStrategy: number;
-  minLayTotalOdds: number;
-  maxLayTotalOdds: number;
-  minBackTotalOdds: number;
-  maxBackTotalOdds: number;
-  minLastTotalOdds: number;
-  maxLastTotalOdds: number;
+
   missingConditionsData: string;
   secsToStartSlider: number[];
 }
@@ -34,18 +29,12 @@ const defaultAttributesConfig: IAttributesConfig = {
   selectedCountries: [],
   selectedSportType: "Horse Racing",
   betType: "",
-  betSize: 0,
+  betSize: 1,
   priceStrategy: "last",
-  priceMinValue: 0,
-  priceMaxValue: 0,
-  maxHorsesToBet: 0,
+  priceMinValue: 1,
+  priceMaxValue: 999,
+  maxHorsesToBet: 50,
   maxHorsesToBetStrategy: 100,
-  minLayTotalOdds: 0,
-  maxLayTotalOdds: 99,
-  minBackTotalOdds: 0,
-  maxBackTotalOdds: 99,
-  minLastTotalOdds: 0,
-  maxLastTotalOdds: 99,
   missingConditionsData: "risk",
   secsToStartSlider: [-3600, 600],
 };
@@ -96,16 +85,6 @@ function Strategy() {
           return;
         }
       }
-    }
-
-    // Additional Validation: Either Lay or Back should be selected
-    if (
-      !data.minBackTotalOdds && data.minBackTotalOdds !== 0 || !data.maxBackTotalOdds && data.maxBackTotalOdds !== 0 ||
-      !data.minLayTotalOdds && data.minLayTotalOdds !== 0 || !data.maxLayTotalOdds && data.maxLayTotalOdds !== 0 ||
-      !data.minLastTotalOdds && data.minLastTotalOdds !== 0 || !data.maxLastTotalOdds && data.maxLastTotalOdds !== 0
-    ) {
-      displayAlert('Please enter values for all minimum and maximum total odds', 'danger');
-      return;
     }
 
 
@@ -314,48 +293,7 @@ function Strategy() {
       </div>
 
 
-      {/* Overruns */}
-      <div className="container">
-        <div className="row align-items-center mb-3">
-          <div className="col text-center">
-            <label>Sum of odds in race</label>
-          </div>
-        </div>
-        <div className="row align-items-center">
-          <div className="col">
-            <label>Back</label>
-          </div>
-          <div className="col">
-            <label>Lay</label>
-          </div>
-          <div className="col">
-            <label>Last</label>
-          </div>
-        </div>
-        <div className="row align-items-center">
-          <div className="col">
-            <label style={{ fontWeight: 'normal' }}>Min</label>
 
-            <input title="The sum of odds of all back values, if it's lower than 1 it's probably a good idea to back because a lot of people want to lay on the race and you should be able to make a guaranteed profit if it's below 1, as the prices are too high. This value should stay at 0." type="number" className="form-control" placeholder="Min" value={data.minBackTotalOdds} onChange={(e) => handleChange('minBackTotalOdds', e.target.value)} />
-            <label style={{ fontWeight: 'normal' }}>Max</label>
-            <input title="The sum of odds of all back values, if it's lower than 1 it's probably a good idea to back because a lot of people want to lay on the race and you should be able to make a guaranteed profit if it's below 1, as the prices are too high. This value should be slightly below 1 for back trades." type="number" className="form-control" placeholder="Max" value={data.maxBackTotalOdds} onChange={(e) => handleChange('maxBackTotalOdds', e.target.value)} />
-          </div>
-          <div className="col">
-            <label style={{ fontWeight: 'normal' }}>Min</label>
-
-            <input title="Value should be slightly above 1 for lay trades. Then then there are too many backers in the race, the prices get too low (odds too high, above 1), and you can make a profit with laying." type="number" className="form-control" placeholder="Min" value={data.minLayTotalOdds} onChange={(e) => handleChange('minLayTotalOdds', e.target.value)} />
-            <label style={{ fontWeight: 'normal' }}>Max</label>
-            <input title="Value should stay high for lays, as the higher the better" type="number" className="form-control" placeholder="Max" value={data.maxLayTotalOdds} onChange={(e) => handleChange('maxLayTotalOdds', e.target.value)} />
-          </div>
-          <div className="col">
-            <label style={{ fontWeight: 'normal' }}>Min</label>
-
-            <input title="For backs, the lower the better, for lays, the higher the better" type="number" className="form-control" placeholder="Min" value={data.minLastTotalOdds} onChange={(e) => handleChange('minLastTotalOdds', e.target.value)} />
-            <label style={{ fontWeight: 'normal' }}>Max</label>
-            <input title="For backs, the lower the better, for lays, the higher the better" type="number" className="form-control" placeholder="Max" value={data.maxLastTotalOdds} onChange={(e) => handleChange('maxLastTotalOdds', e.target.value)} />
-          </div>
-        </div>
-      </div>
 
 
 

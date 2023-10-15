@@ -1,5 +1,5 @@
-// export const API_URL = import.meta.env.VITE_REACT_APP_API_URL || 'betfair-bot.com:7779';
-export const API_URL = import.meta.env.VITE_REACT_APP_API_URL || '3.24.169.161:7777';
+export const API_URL = import.meta.env.VITE_REACT_APP_API_URL || 'betfair-bot.com:7779';
+// export const API_URL = import.meta.env.VITE_REACT_APP_API_URL || '3.24.169.161:7777';
 
 
 export const DATA_ATTRIBUTES = [
@@ -7,6 +7,9 @@ export const DATA_ATTRIBUTES = [
     "Last Traded price",
     "Current lay price",
     "Current back price",
+    "Last total odds",
+    "Back total odds",
+    "Lay total odds",
 
     "Avg $",
     "Bar",
