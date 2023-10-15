@@ -58,6 +58,11 @@ class StrategyHandler:
 
                 country = race_dict2[market_id]['event']['countryCode']
                 strategy_countries = strategy['selectedCountries']
+                venue =  race_dict2[market_id]['event']['venue']
+                market_name =  race_dict2[market_id]['marketName']
+                total_matched =  race_dict2[market_id]['totalMatched']
+                total_horses_num = len(race_dict2[market_id]['runners'])
+                 
                 if not country in strategy_countries:
                     update_strategy_status(
                         ff, market_id, strategy_name, comment=f'Country {country} not part of strategy countries {strategy_countries}')
@@ -108,7 +113,13 @@ class StrategyHandler:
                     # check for selected conditions in strategy
                     order_found = False
                     condition_met = True
-                    horse_info_dict = horse['_horse_info']
+                    horse_info_dict = horse['_horse_info'] if horse['_horse_info'] else {}
+                    
+                    horse_info_dict['Horses per race'] = total_horses_num
+                    horse_info_dict['Last Traded price'] = horse['last']
+                    horse_info_dict['Current lay price'] = horse['lay']
+                    horse_info_dict['Current back price'] = horse['back']
+                    
                     for item_name, item_value in strategy.items():
                         if not isinstance(item_value, dict): # can be limited to condition items
                             continue
@@ -155,10 +166,14 @@ class StrategyHandler:
                         if active == 'on': # and is_prod_computer():
                             log.info(
                                 {f"Sending to betfair: {strategy_name} {bet_type} {bet_size} {price} {selection_id} {market_id}"})
-                            status, bet_id, average_price_matched = place_order(market_id, selection_id, bet_size, price,
+                            status, bet_id, average_price_matched = await place_order(market_id, selection_id, bet_size, price,
                                                                                 side=bet_type, persistence_type=persistent_type)
 
                         order = {'strategy_name': strategy_name,
+                                 'venue': venue,
+                                 'market_name': market_name,
+                                 'country': country,
+                                 'total_matched': total_matched,
                                  'market_id': market_id,
                                  'size': bet_size,
                                  'selection_id': selection_id,
@@ -169,7 +184,7 @@ class StrategyHandler:
                                  'last_back': horse['back'],
                                  'side': bet_type,
                                  'persistence_type': persistent_type,
-                                 'timestamp': datetime.now().isoformat()[:19],
+                                 'timestamp':  datetime.now().strftime('%d/%m/%Y %M:%S'),
                                  'seconds_to_start': -race_data2['_seconds_to_start'],
                                  'status': status,
                                  'bet_id': bet_id,

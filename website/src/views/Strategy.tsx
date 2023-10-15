@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ConditionsManager from '../components/StrategyEditor/ConditionsManager';
 import { API_URL, DATA_ATTRIBUTES } from '../helper/Constants';
 import './Strategy.css';
-import TimeBeforeRaceSlider from './TimeBeforeRaceSlider';
+import CustomSlider from './CustomSlider';
 
 interface IAttributesConfig {
   active: string;
@@ -360,8 +360,21 @@ function Strategy() {
 
 
       <div className="timeSlider centered">
-        <TimeBeforeRaceSlider data={data} handleChange={handleChange} />
+        <CustomSlider
+          data={data}
+          handleChange={handleChange}
+          sliderName='secsToStartSlider'
+          marks={[
+            { value: -3600, label: '-3600s' },
+            { value: 0, label: '0s' },
+            { value: 600, label: '600s' }
+          ]}
+          min={-3600}
+          max={600}
+          title='Place bets in this time window relative to race start'
+        />
       </div>
+
 
 
 

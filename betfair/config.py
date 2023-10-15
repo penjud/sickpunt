@@ -23,15 +23,15 @@ orders_collection = mongo_db["orders"]
 strategy_collection = mongo_db["strategies"]
 admin_collection = mongo_db["user_admin"]
 
-betfair_credentials = list(admin_collection.find(
+admin_data = list(admin_collection.find(
     {"Email": USERNAME}, {'_id': False}))[0]
 
-APP_KEY = betfair_credentials['BetfairToken']
-PASSWORD = betfair_credentials['BetfairPassword']
-USERNAME = betfair_credentials['BetfairLogin']
+APP_KEY = admin_data['BetfairToken']
+PASSWORD = admin_data['BetfairPassword']
+USERNAME = admin_data['BetfairLogin']
 
 # constants
-COUNTRIES = ['AU', 'UK']
+COUNTRIES = ['AU', 'UK', 'IE']
 MARKET_TYPES = ['WIN']
 EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
 KEEP_AFTER_RACE_START_MIN = 60

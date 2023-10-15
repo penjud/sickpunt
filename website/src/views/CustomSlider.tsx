@@ -3,42 +3,39 @@ import Slider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
-const TimeBeforeRaceSlider = ({ data, handleChange }) => {
+const CustomSlider = ({ data, handleChange, sliderName, marks, min, max, title}) => {
     const [value, setValue] = useState([-3600, 600]);
 
     useEffect(() => {
-      if (data.secsToStartSlider && data.secsToStartSlider.length === 2) {
-        setValue(data.secsToStartSlider);
+      if (data[sliderName] && data[sliderName].length === 2) {
+          setValue(data[sliderName]);
       }
-    }, [data]);
+  }, [data, sliderName]);
+  
 
     const handleInputChange = (index, event) => {
       const newVal = [...value];
       newVal[index] = Number(event.target.value) || 0;
       setValue(newVal);
-      handleChange('secsToStartSlider', newVal);
+      handleChange(sliderName, newVal);
     };
 
     return (
       <Box sx={{ width: 500 }}>
         <Typography id="range-slider" gutterBottom>
-          Place bets in this time window
+          {title}
         </Typography>
         <Slider
           value={value}
           onChange={(_, newValue) => {
             setValue(newValue as [number, number]);
-            handleChange('secsToStartSlider', newValue);
+            handleChange(sliderName, newValue);
           }}
           valueLabelDisplay="auto"
           aria-labelledby="range-slider"
-          min={-3600}
-          max={600}
-          marks={[
-            { value: -3600, label: '-3600s' },
-            { value: 0, label: '0s' },
-            { value: 600, label: '600s' }
-          ]}
+          min={min}
+          max={max}
+          marks={marks}
         />
         <div>
           From: 
@@ -47,16 +44,16 @@ const TimeBeforeRaceSlider = ({ data, handleChange }) => {
             value={value[0]}
             onChange={(e) => handleInputChange(0, e)}
           />
-          seconds to 
+         to 
           <input 
             type="number"
             value={value[1]}
             onChange={(e) => handleInputChange(1, e)}
           />
-          seconds relative to start of race.
+          
         </div>
       </Box>
     );
 }
 
-export default TimeBeforeRaceSlider;
+export default CustomSlider;

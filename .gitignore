@@ -292,3 +292,4 @@ dist
 items.json
 default*.log.*
 *.log
+default.log.*
