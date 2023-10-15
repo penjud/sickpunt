@@ -198,7 +198,7 @@ async def last_prices(websocket: WebSocket):
             log.error(f"Offending data: {converted_ff_cache}")
             # Optionally, re-raise the exception if you want the error to propagate
             # raise
-        await asyncio.sleep(0)
+        await asyncio.sleep(.1)
 
 
 class StreamWithReconnect:
@@ -258,7 +258,7 @@ async def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, st
             last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
         await strategy_handler.check_modify(
             last_cache, ff_cache, race_dict, runnerid_name_dict, strategies)
-        await asyncio.sleep(0)
+        await asyncio.sleep(.1)
 
 
 async def load_strategies(strategies):
