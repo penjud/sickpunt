@@ -66,7 +66,12 @@ class RacesSpider(scrapy.Spider):
 
         print("=====================")
         
-        match = re.search(r'_(\d+)/$', response.url)
+        # Remove the initial part of the URL up to 'form-guide/'
+        clean_url = response.url.split('form-guide/')[1]
+
+        # Define the regex pattern to capture the number after the 4th slash
+        pattern = r'(\d+)'
+        match = re.search(pattern, clean_url)
         if match:
             number = match.group(1)  # Extracted number
             new_url = f'https://www.punters.com.au/form-guide/spreadsheet-{number}'  # Formatted URL
