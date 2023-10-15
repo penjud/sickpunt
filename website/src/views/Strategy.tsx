@@ -17,7 +17,7 @@ interface IAttributesConfig {
   priceMinValue: number;
   priceMaxValue: number;
   maxHorsesToBet: number;
-  maxHorsesToBetStrategy: string;
+  maxHorsesToBetStrategy: number;
   minLayTotalOdds: number;
   maxLayTotalOdds: number;
   minBackTotalOdds: number;
@@ -35,11 +35,11 @@ const defaultAttributesConfig: IAttributesConfig = {
   selectedSportType: "Horse Racing",
   betType: "",
   betSize: 0,
-  priceStrategy: "",
+  priceStrategy: "last",
   priceMinValue: 0,
   priceMaxValue: 0,
   maxHorsesToBet: 0,
-  maxHorsesToBetStrategy: "",
+  maxHorsesToBetStrategy: 100,
   minLayTotalOdds: 0,
   maxLayTotalOdds: 99,
   minBackTotalOdds: 0,

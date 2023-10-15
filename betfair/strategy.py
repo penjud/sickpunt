@@ -91,7 +91,7 @@ class StrategyHandler:
 
                 df = df.loc[~df.index.str.startswith('_')]
 
-                ascending = True if max_horses_to_bet_strategy == 'lowest odds first' else False
+                ascending = True if max_horses_to_bet_strategy == 'highest odds first' else False
                 try:
                     df = df.sort_values(price_strategy, ascending=ascending)
                 except KeyError:
