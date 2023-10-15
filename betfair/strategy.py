@@ -151,7 +151,7 @@ class StrategyHandler:
                         if active == 'on': # and is_prod_computer():
                             log.info(
                                 {f"Sending to betfair: {strategy_name} {bet_type} {bet_size} {price} {selection_id} {market_id}"})
-                            status, bet_id, average_price_matched = await place_order(market_id, selection_id, bet_size, price,
+                            status, bet_id, average_price_matched = place_order(market_id, selection_id, bet_size, price,
                                                                                 side=bet_type, persistence_type=persistent_type)
 
                         order = {'strategy_name': strategy_name,

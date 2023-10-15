@@ -26,7 +26,7 @@ def price_adjustment(price):
     return round(price_ladder[i], 2)
 
 
-async def place_order(market_id, selection_id, size, price, side='LAY', persistence_type='LAPSE'):
+def place_order(market_id, selection_id, size, price, side='LAY', persistence_type='LAPSE'):
     # placing an order
     limit_order = filters.limit_order(
         size=size, price=price, persistence_type=persistence_type)

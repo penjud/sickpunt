@@ -94,7 +94,8 @@ def extract_table_to_df(html):
         horse_details_div = row.find(
             "div", class_="form-guide-overview__horse")
         horse_name = horse_details_div.a.text.strip() if horse_details_div.a else ''
-
+        horse_name = re.sub("'", "", horse_name)
+        
         cells = row.find_all("td")
 
         horse_number = cells[0].text.strip()
