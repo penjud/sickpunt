@@ -19,7 +19,7 @@ const RaceStreamer: React.FC = () => {
     socket.onmessage = (event) => {
       setIsLoading(false);
       const rawData = JSON.parse(event.data);
-      // console.log("WebSocket Data:", rawData);
+      console.log("WebSocket Data:", rawData);
       let formattedData: RaceData[] = Object.entries(rawData.ff_cache).map(([raceId, horses]) => {
         let horseData: HorseData[] = Object.entries(horses)
           .filter(([key]) => !key.startsWith('_'))
@@ -47,16 +47,18 @@ const RaceStreamer: React.FC = () => {
         return {
           raceId,
           horseData,
+          raceTitle: horses._race_title,
           overrunBack: horses._back_overrun,
           overrunLay: horses._lay_overrun,
           overrunLast: horses._last_overrun,
           secondsToStart: horses._seconds_to_start,
+          raceTitle: horses._race_title,
           orders: horses._orders,
           strategyStatus: horses._strategy_status,
         };
       });
 
-      formattedData = formattedData.sort((a, b) => a.secondsToStart - b.secondsToStart);
+      // formattedData = formattedData.sort((a, b) => a.index - b.index);
       setRaceData(formattedData);
     };
 
@@ -106,6 +108,7 @@ const RaceStreamer: React.FC = () => {
           <RaceChart
             key={race.raceId}
             raceId={race.raceId}
+            raceTitle={race.raceTitle}
             horseData={race.horseData}
             overrunBack={race.overrunBack}
             overrunLay={race.overrunLay}

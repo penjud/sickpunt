@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from betfair.config import (COUNTRIES, EVENT_TYPE_IDS,
-                            KEEP_AFTER_RACE_START_MIN, MARKET_TYPES,
+from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, HOURS_TO_FETCH,
+                            KEEP_AFTER_RACE_START_MIN, MARKET_TYPES, MAX_RACE_STREAMS,
                             SECS_MARKET_FETCH_INTERVAL, client,
                             punters_com_au_collection, upsert_event_metadata)
 
@@ -25,68 +25,77 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
             print("Interactive login failed. Trying again in 1min.")
             await asyncio.sleep(60)
         now = datetime.utcnow()
-        end_time = now + timedelta(days=1)
+        end_time = now + timedelta(hours=HOURS_TO_FETCH)
         race_datas = []
-
-        # Define the filter for the races
-        market_filter = {
-            'eventTypeIds': EVENT_TYPE_IDS,  # Horse Racing event type ID
-            'marketStartTime': {
-                'from': (now - timedelta(minutes=KEEP_AFTER_RACE_START_MIN)).isoformat(),
-                'to': end_time.isoformat()
-            },
-            'market_types': MARKET_TYPES,
-            'marketCountries': COUNTRIES  # UK and IE market countries
-        }
-
-        # Retrieve the list of races
-        races = client.betting.list_market_catalogue(
-            filter=market_filter,
-            max_results=25,
-            market_projection=[
-                'EVENT', 'RUNNER_DESCRIPTION', 'MARKET_START_TIME']
-        )
-
-        # Update the shared dict of market data
-        # Update the shared list of market data
         current_races = set()
-        for race in races:
-            race_data = json.loads(race.json())
-            race_datas.append(race_data)
-            race_ids.add(race_data['marketId'])
-            current_races.add(race_data['marketId'])
-            race_dict[race_data['marketId']] = {'start_time': datetime.fromisoformat(
-                race_data['marketStartTime']).replace(tzinfo=pytz.utc),
-                'runners': race_data['runners'],
-                'event': race_data['event'],
-                'marketName': race_data['marketName'],
-                'totalMatched': race_data['totalMatched']}
-
-            race_data_available.set()
-
-        # remove all elements in race_ids that are not in current_races
-        race_ids.intersection_update(current_races)
-        # print('----')
-        # print(datetime.now())
-        # print (len(race_ids))
-        # print (race_ids)
-        # print(current_races)
-
-        # print(race_datas)
-        upsert_event_metadata(race_datas)
-
-        # load all market_ids from punters_com_au_collection
         horse_names = []
-        for race in race_datas:
-            for horse in race['runners']:
-                horse_names.append(
-                    re.sub(r'^\d+\.\s+', '', horse['runnerName']))
-                runnerid_name_dict[horse['selectionId']] = horse['runnerName']
+        # Define the filter for the races
+        
+        for market_type in MARKET_TYPES:
+        
+            market_filter = {
+                'eventTypeIds': EVENT_TYPE_IDS,  # Horse Racing event type ID
+                'marketStartTime': {
+                    'from': (now - timedelta(minutes=KEEP_AFTER_RACE_START_MIN)).isoformat(),
+                    'to': end_time.isoformat()
+                },
+                'marketTypeCodes': [market_type],
+                'marketCountries': COUNTRIES  # UK and IE market countries
+            }
 
-        # Execute the query
-        horse_infos = list(punters_com_au_collection.find(
-            {"Horse Name": {"$in": horse_names}}, {'_id': 0}))
-        for horse in horse_infos:
-            horse_info_dict[horse['Horse Name']] = horse
+            # Retrieve the list of races
+            races = client.betting.list_market_catalogue(
+                filter=market_filter,
+                max_results=MAX_RACE_STREAMS,
+                sort="FIRST_TO_START",
+                market_projection=[
+                    'EVENT','EVENT_TYPE','COMPETITION', 'RUNNER_DESCRIPTION', 'MARKET_START_TIME', 'RUNNER_METADATA']
+            )
+
+            # Update the shared dict of market data
+            # Update the shared list of market data
+            
+            for race in races:
+                race_data = json.loads(race.json())
+                if race_data['marketId'] in race_ids:
+                    log.warning("Metadata tries to override previous market type")
+                    continue
+                current_races.add(race_data['marketId'])                
+                race_datas.append(race_data)
+                race_ids.add(race_data['marketId'])
+                race_dict[race_data['marketId']] = {'start_time': datetime.fromisoformat(
+                    race_data['marketStartTime']).replace(tzinfo=pytz.utc),
+                    'runners': race_data['runners'],
+                    'event': race_data['event'],
+                    'marketName': race_data['marketName'],
+                    'market_type': market_type,
+                    'totalMatched': race_data['totalMatched']}
+
+                race_data_available.set()
+
+            # remove all elements in race_ids that are not in current_races
+            race_ids.intersection_update(current_races)
+            # print('----')
+            # print(datetime.now())
+            # print (len(race_ids))
+            # print (race_ids)
+            # print(current_races)
+
+            # print(race_datas)
+            upsert_event_metadata(race_datas)
+
+            # load all market_ids from punters_com_au_collection
+            horse_names = []
+            for race in race_datas:
+                for horse in race['runners']:
+                    horse_names.append(
+                        re.sub(r'^\d+\.\s+', '', horse['runnerName']))
+                    runnerid_name_dict[horse['selectionId']] = horse['runnerName']
+
+            # Execute the query
+            horse_infos = list(punters_com_au_collection.find(
+                {"Horse Name": {"$in": horse_names}}, {'_id': 0}))
+            for horse in horse_infos:
+                horse_info_dict[horse['Horse Name']] = horse
 
         await asyncio.sleep(SECS_MARKET_FETCH_INTERVAL)

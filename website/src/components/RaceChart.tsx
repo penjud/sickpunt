@@ -3,8 +3,9 @@ import { CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis } from 'r
 import { RaceProps } from '../helper/Types'; // Assuming you will create this types file
 import { CustomTooltip } from './CustomTooltip';
 import '../views/Races.css';
+import { OverrunComponent } from './Overrun';
 
-export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack, overrunLay, overrunLast, secondsToStart, strategyStatus }) => {
+export const RaceChart: React.FC<RaceProps> = ({ raceId, raceTitle, horseData, overrunBack, overrunLay, overrunLast, secondsToStart, strategyStatus }) => {
     const [linesVisibility, setLinesVisibility] = useState({
         back: true,
         backMovingAvg: false,
@@ -22,35 +23,6 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
             [lineName]: !linesVisibility[lineName],
         });
     };
-
-    function OverrunComponent({ overrunBack, overrunLay, overrunLast }) {
-        const [isHighlighted, setIsHighlighted] = useState(false);
-
-        useEffect(() => {
-            let timer;
-
-            if (overrunLay > 1 || overrunBack < 1) {
-                setIsHighlighted(true);
-                timer = setTimeout(() => {
-                    setIsHighlighted(false);
-                }, 300);
-            }
-
-            return () => {
-                if (timer) {
-                    clearTimeout(timer);
-                }
-            };
-        }, [overrunLay]);
-
-        return (
-            <p style={{ background: isHighlighted ? 'red' : 'transparent' }}>
-                Overruns (bk/ly/lt) {overrunBack.toFixed(2)}
-                /{overrunLay.toFixed(2)}
-                / {overrunLast.toFixed(2)}
-            </p>
-        );
-    }
 
     const StrategyStatusComponent = ({ strategyStatus }) => {
         if (!strategyStatus || typeof strategyStatus !== 'object') {
@@ -70,10 +42,6 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
         );
     }
     
-    
-    
-
-
 
     const horseDataWithOdds = horseData.map((horse) => ({
         horseId: horse.horseId,
@@ -105,7 +73,7 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, horseData, overrunBack,
     
     return (
         <div>
-            <div className="raceTitle">Race {raceId}</div>
+            <div className="raceTitle">Race {raceId} {raceTitle}</div>
             <OverrunComponent overrunBack={overrunBack} overrunLay={overrunLay} overrunLast={overrunLast} />
             <StrategyStatusComponent strategyStatus={strategyStatus} />
             <p>

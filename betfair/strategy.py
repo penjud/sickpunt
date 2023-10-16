@@ -34,8 +34,15 @@ class StrategyHandler:
             active = strategy.get('active', 'off')
             price_max_value = strategy.get('priceMaxValue', 1000)
             price_min_value = strategy.get('priceMinValue', 1.01)
+            strategy_market_type = strategy.get('marketType', 'WIN')
+            
 
             for market_id, race_data in ff_copy.items():
+                race_market_type = race_dict[market_id]['market_type']
+                async with lock:
+                    race_data2 = copy.copy(race_data)
+                    race_dict2 = copy.copy(race_dict)
+                    
                 strategy_race_order_count = len(
                     [order for order in ff_copy[market_id]['_orders'] if order.get('strategy_name') == strategy_name])
                 if strategy_race_order_count >= max_horses_to_bet:
@@ -43,10 +50,11 @@ class StrategyHandler:
                         ff, market_id, strategy_name, comment=f'Already bet on {max_horses_to_bet} horses.')
                     continue
 
-                async with lock:
-                    race_data2 = copy.copy(race_data)
-                    race_dict2 = copy.copy(race_dict)
-
+                if strategy_market_type!=race_market_type:
+                    
+                    update_strategy_status(ff, market_id, strategy_name, comment=f'Strategy only for {strategy_market_type}.')
+                    continue
+                
                 if not race_data2['_seconds_to_start']:
                     continue  # data not yet available
 
@@ -81,10 +89,8 @@ class StrategyHandler:
                 try:
                     df = df.sort_values(price_strategy, ascending=ascending)
                 except KeyError:
-                    log.warning(
-                        f"Price strategy {price_strategy} not found in data")
-                    update_strategy_status(
-                        ff, market_id, strategy_name, comment='Price strategy not found in data')
+                    log.warning(f"Price strategy {price_strategy} not found in data")
+                    update_strategy_status(ff, market_id, strategy_name, comment='Price strategy not found in data')
                     continue
 
                 df = df.head(max_horses_to_bet)
@@ -95,7 +101,7 @@ class StrategyHandler:
                     order_found = False
                     condition_met = True
                     horse_info_dict = horse['_horse_info'] if horse['_horse_info'] else {}
-                    
+                
                     horse_info_dict['Horses per race'] = total_horses_num
                     horse_info_dict['Last Traded price'] = horse['last']
                     horse_info_dict['Current lay price'] = horse['lay']
@@ -157,6 +163,7 @@ class StrategyHandler:
                         order = {'strategy_name': strategy_name,
                                  'venue': venue,
                                  'market_name': market_name,
+                                 'market_type': strategy_market_type,
                                  'country': country,
                                  'total_matched': total_matched,
                                  'market_id': market_id,

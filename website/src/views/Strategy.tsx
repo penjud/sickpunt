@@ -8,6 +8,7 @@ import CustomSlider from './CustomSlider';
 
 interface IAttributesConfig {
   active: string;
+  market_type: string;
   StrategyName: string;
   selectedCountries: string[];
   selectedSportType: string;
@@ -26,6 +27,7 @@ interface IAttributesConfig {
 const defaultAttributesConfig: IAttributesConfig = {
   active: "off",
   StrategyName: "",
+  market_type: "WIN",
   selectedCountries: [],
   selectedSportType: "Horse Racing",
   betType: "",
@@ -253,8 +255,19 @@ function Strategy() {
             <input type="radio" value="Back" checked={data.betType === "Back"} onChange={() => handleChange('betType', "Back")} />
             Back
           </label>
+          <div className="selections">
+          <select value={data.market_type} onChange={(e) => handleChange('market_type', e.target.value)}>
+            <option value="WIN">WIN</option>
+            <option value="PLACE">PLACE</option>
+             </select>
         </div>
+        </div>
+  
       </div>
+
+
+
+
 
       {/* Bet Size */}
       <div className="bet-size">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-export const OverrunComponent({ overrunBack, overrunLay, overrunLast }) {
+export const OverrunComponent = ({ overrunBack, overrunLay, overrunLast }) => {
     const [isHighlighted, setIsHighlighted] = useState(false);
 
     useEffect(() => {
