@@ -57,9 +57,9 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
             
             for race in races:
                 race_data = json.loads(race.json())
-                if race_data['marketId'] in race_ids:
-                    log.warning("Metadata tries to override previous market type")
-                    continue
+                # if race_data['marketId'] in race_ids:
+                #     log.warning("Metadata tries to override previous market type")
+                #     continue
                 current_races.add(race_data['marketId'])                
                 race_datas.append(race_data)
                 race_ids.add(race_data['marketId'])
