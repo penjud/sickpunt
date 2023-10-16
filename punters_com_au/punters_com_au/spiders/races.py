@@ -74,10 +74,9 @@ class RacesSpider(scrapy.Spider):
             number = match.group(1)  # Extracted number
             possible_urls.append(f'https://www.punters.com.au/form-guide/spreadsheet-{number}')  # Formatted URL
 
-            today = datetime.now().strftime('%Y%m%d')
-            possible_urls.append(f'https://www.punters.com.au/form-guide/spreadsheet-{today}-{place}-{number}')
-            tomorrow = (datetime.now()+timedelta(days=1)).strftime('%Y%m%d')
-            possible_urls.append(f'https://www.punters.com.au/form-guide/spreadsheet-{tomorrow}-{place}-{number}')
+            for i in range (3):
+                date = (datetime.now()+timedelta(days=i)).strftime('%Y%m%d')
+                possible_urls.append(f'https://www.punters.com.au/form-guide/spreadsheet-{date}-{place}-{number}')
             
             headers = {
                 'User-Agent': 'Mozilla/5.0',
