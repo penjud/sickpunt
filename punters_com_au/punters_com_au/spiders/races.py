@@ -11,6 +11,7 @@ from betfair.config import punters_com_au_collection
 import requests
 import pandas as pd
 from io import StringIO
+from datetime import datetime, timedelta
 
 
 class RacesSpider(scrapy.Spider):
@@ -59,41 +60,50 @@ class RacesSpider(scrapy.Spider):
 
         print("=====================")
         print(f"URL: {response.url}")
-        print(df)
+        # print(df)
         for _, row in df.iterrows():
             horse_name = row['Horse Name']
             punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
 
         print("=====================")
         
-        # Remove the initial part of the URL up to 'form-guide/'
-        clean_url = response.url.split('form-guide/')[1]
-
-        # Define the regex pattern to capture the number after the 4th slash
-        pattern = r'(\d+)'
-        match = re.search(pattern, clean_url)
+        # Assuming response.url and df are defined earlier
+        match = re.search(r'_(\d+)/$', response.url)
         if match:
+            possible_urls = []
             number = match.group(1)  # Extracted number
-            new_url = f'https://www.punters.com.au/form-guide/spreadsheet-{number}'  # Formatted URL
-            print(new_url)
+            possible_urls.append(f'https://www.punters.com.au/form-guide/spreadsheet-{number}')  # Formatted URL
+
+            today = datetime.now().strftime('%Y%m%d')
+            possible_urls.append(f'https://www.punters.com.au/form-guide/spreadsheet-{today}-{place}-{number}')
+            tomorrow = (datetime.now()+timedelta(days=1)).strftime('%Y%m%d')
+            possible_urls.append(f'https://www.punters.com.au/form-guide/spreadsheet-{tomorrow}-{place}-{number}')
+            
             headers = {
                 'User-Agent': 'Mozilla/5.0',
             }
 
-            response = requests.get(new_url, headers=headers)
+            for url in possible_urls:
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200:
+                    csv_data = StringIO(response.text)
+                    df2 = pd.read_csv(csv_data)
+                    df2[df2.columns[1:]] = df2[df2.columns[:-1]].values
+                    df_merged = pd.merge(df, df2, on='Horse Name')
+                    print(df_merged.columns)
+                    print(f'Total columns: {len(df_merged.columns)}')
+                    df_merged = df_merged.fillna('NA')
 
-            if response.status_code == 200:
-                csv_data = StringIO(response.text)
-                df2 = pd.read_csv(csv_data)
-                df2[df2.columns[1:]] = df2[df2.columns[:-1]].values
-                df_merged=pd.merge(df, df2, on='Horse Name')
-                print (df_merged)
-                df_merged = df_merged.fillna('NA')
-                for _, row in df_merged.iterrows():
-                    horse_name = row['Horse Name']
-                    punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
-            else:
-                print(f"Failed to download: {response.status_code}")
+                    for _, row in df_merged.iterrows():
+                        horse_name = row['Horse Name']
+                        punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
+                    
+                    break  # Break the loop as we got a 200 status
+                else:
+                    print(f"Failed to download: {response.status_code}, trying next URL.")
+                    for _, row in df.iterrows():
+                        horse_name = row['Horse Name']
+                        punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
             
 
 def extract_table_to_df(html):
