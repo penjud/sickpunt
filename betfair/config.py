@@ -31,11 +31,11 @@ PASSWORD = admin_data['BetfairPassword']
 USERNAME = admin_data['BetfairLogin']
 
 # constants
-COUNTRIES = ['AU', 'UK', 'IE']
+COUNTRIES = ['AU', 'UK', 'IE', 'US']
 MARKET_TYPES = ['WIN']
-MAX_RACE_STREAMS = 20
+MAX_RACE_STREAMS = 15
 
-EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
+EVENT_TYPE_IDS = ['7']
 KEEP_AFTER_RACE_START_MIN = 60
 HOURS_TO_FETCH = 12
 

@@ -13,38 +13,30 @@ function OrdersTable() {
     const [isManuallySorted, setIsManuallySorted] = useState(false);
 
     useEffect(() => {
-        const intervalId = setInterval(() => {
-            axios.post(`http://${API_URL}/orders`,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            )
-            .then(response => {
-                let sortedData;
-                if (!isManuallySorted) {
-                    sortedData = response.data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-                } else {
-                    sortedData = response.data;
-                }
-                setOrders(sortedData);
-                setIsLoading(false);
-            })
-            .catch(error => {
-                console.error('Error fetching orders:', error);
-            });
-        }, 10000);
-    
-        return () => clearInterval(intervalId);
+        axios.post(`http://${API_URL}/orders`,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        )
+        .then(response => {
+            const sortedData = response.data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            setOrders(sortedData);
+            setIsLoading(false);
+        })
+        .catch(error => {
+            console.error('Error fetching orders:', error);
+        });
     }, [isManuallySorted]);
+
 
     const handleSort = (key) => {
         setIsManuallySorted(true);
         const sortedData = [...orders].sort((a, b) => {
-            const valA = key === 'timestamp' ? new Date(a[key]).getTime() : a[key];
-            const valB = key === 'timestamp' ? new Date(b[key]).getTime() : b[key];
-    
+            const valA = key === 'timestamp' ? new Date(a[key]).toISOString() : a[key];
+            const valB = key === 'timestamp' ? new Date(b[key]).toISOString() : b[key];
+      
             if (valA < valB) return isSortAscending ? -1 : 1;
             if (valA > valB) return isSortAscending ? 1 : -1;
             return 0;
