@@ -87,6 +87,7 @@ class RacesSpider(scrapy.Spider):
                 'Referer': 'The Referer URL',
                 # Add other headers if necessary
             }
+            table_download_succes=False
             response = requests.get(file_url, headers=headers)
             if response.status_code == 200:
                 csv_data = StringIO(response.text)
@@ -95,10 +96,9 @@ class RacesSpider(scrapy.Spider):
                 df2[df2.columns[1:]] = df2[df2.columns[:-1]].values
                 df_merged = pd.merge(df, df2, on='Horse Name')
                 df_merged = df_merged.fillna('NA')
-                    
-                    
+                     
             if not table_download_succes:
-                log.warning(f'Failed to download table from URLs: {possible_urls}')
+                log.warning(f'Failed to download table from URLs: {file_url}')
                 df_merged=df
             
             # save data
@@ -124,6 +124,7 @@ def extract_table_to_df(html):
             "div", class_="form-guide-overview__horse")
         horse_name = horse_details_div.a.text.strip() if horse_details_div.a else ''
         horse_name = re.sub("'", "", horse_name)
+        horse_name = re.sub("""`""", "", horse_name)
         
         cells = row.find_all("td")
 
