@@ -8,9 +8,10 @@ from datetime import datetime, timedelta
 import pytz
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, HOURS_TO_FETCH,
-                            KEEP_AFTER_RACE_START_MIN, MARKET_TYPES, MAX_RACE_STREAMS,
-                            SECS_MARKET_FETCH_INTERVAL, client,
-                            punters_com_au_collection, upsert_event_metadata)
+                            KEEP_AFTER_RACE_START_MIN, MARKET_TYPES,
+                            MAX_RACE_STREAMS, SECS_MARKET_FETCH_INTERVAL,
+                            client, punters_com_au_collection,
+                            upsert_event_metadata)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -30,9 +31,9 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
         current_races = set()
         horse_names = []
         # Define the filter for the races
-        
+
         for market_type in MARKET_TYPES:
-        
+
             market_filter = {
                 'eventTypeIds': EVENT_TYPE_IDS,  # Horse Racing event type ID
                 'marketStartTime': {
@@ -49,25 +50,25 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
                 max_results=MAX_RACE_STREAMS,
                 sort="FIRST_TO_START",
                 market_projection=[
-                    'EVENT','EVENT_TYPE','COMPETITION', 'RUNNER_DESCRIPTION', 'MARKET_START_TIME', 'RUNNER_METADATA']
+                    'EVENT', 'EVENT_TYPE', 'COMPETITION', 'RUNNER_DESCRIPTION', 'MARKET_START_TIME', 'RUNNER_METADATA']
             )
 
             # Update the shared dict of market data
             # Update the shared list of market data
-            
+
             for race in races:
                 race_data = json.loads(race.json())
                 # if race_data['marketId'] in race_ids:
                 #     log.warning("Metadata tries to override previous market type")
                 #     continue
-                current_races.add(race_data['marketId'])                
+                current_races.add(race_data['marketId'])
                 race_datas.append(race_data)
                 race_ids.add(race_data['marketId'])
                 race_dict[race_data['marketId']] = {'start_time': datetime.fromisoformat(
                     race_data['marketStartTime']).replace(tzinfo=pytz.utc),
                     'runners': race_data['runners'],
                     'event': race_data['event'],
-                    'marketName': race_data['marketName'],
+                    'marketName': race_data['marketName']+' '+race_data['event']['name'],
                     'market_type': market_type,
                     'totalMatched': race_data['totalMatched']}
 
@@ -90,7 +91,8 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
                 for horse in race['runners']:
                     horse_names.append(
                         re.sub(r'^\d+\.\s+', '', horse['runnerName']))
-                    runnerid_name_dict[horse['selectionId']] = horse['runnerName']
+                    runnerid_name_dict[horse['selectionId']
+                                       ] = horse['runnerName']
 
             # Execute the query
             horse_infos = list(punters_com_au_collection.find(

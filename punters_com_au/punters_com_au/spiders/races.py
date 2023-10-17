@@ -31,8 +31,6 @@ def extract_table_to_df(html):
         horse_name = horse_details_div.a.text.strip() if horse_details_div.a else ''
         horse_name = re.sub("'", "", horse_name)
         horse_name = re.sub("`", "", horse_name)
-        if  'Hammer' in horse_name:
-            print("spot")
         cells = row.find_all("td")
         horse_number = cells[0].text.strip()
         last_10 = cells[2].text.strip()
