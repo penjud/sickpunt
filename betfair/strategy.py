@@ -124,8 +124,17 @@ class StrategyHandler:
                                 update_strategy_status(
                                     ff, market_id, strategy_name, selection_id, comment=f'{item_name} not found in data')
                                 break
-
-                        if not (float(item_value['min']) <= float(horse_info_dict[item_name]) <= float(item_value['max'])):
+                        
+                        try:
+                            val = horse_info_dict[item_name]
+                        except Exception as e:
+                            log.warning(f"Error getting {item_name} from horse_info_dict: {e}")
+                            condition_met = False
+                            update_strategy_status(
+                                ff, market_id, strategy_name, selection_id, comment=f'{item_name} not found in data')
+                            continue
+                        
+                        if not (float(item_value['min']) <= val <= float(item_value['max'])):
                             condition_met = False
                             update_strategy_status(
                                 ff, market_id, strategy_name, selection_id, comment=f'{item_name} condition not met {item_value["min"]} <= {round(horse_info_dict[item_name],2)} <= {item_value["max"]}')
