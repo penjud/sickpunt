@@ -37,7 +37,7 @@ MAX_RACE_STREAMS = 20
 
 EVENT_TYPE_IDS = ['7']  # Horse Racing event type ID
 KEEP_AFTER_RACE_START_MIN = 60
-HOURS_TO_FETCH = 12
+HOURS_TO_FETCH = 8
 
 SERVER_NAMES = ['ip-172-31-35-26.ap-southeast-2.compute.internal']
 
