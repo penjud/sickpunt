@@ -1,5 +1,6 @@
 """Scraping of punters.com.au"""
 
+import logging
 import re
 from pathlib import Path
 
@@ -12,6 +13,9 @@ import requests
 import pandas as pd
 from io import StringIO
 from datetime import datetime, timedelta
+from betfair.helper import init_logger
+
+log=logging.getLogger(__name__)
 
 
 class RacesSpider(scrapy.Spider):
@@ -31,7 +35,7 @@ class RacesSpider(scrapy.Spider):
             full_url = response.urljoin(rel_url)
             
             # Output or further process the extracted URL
-            print(f"Extracted URL: {full_url}")
+            log.info(f"Extracted URL: {full_url}")
             urls.append(full_url)
 
         # Overview site
@@ -43,68 +47,71 @@ class RacesSpider(scrapy.Spider):
         html_content = response.body
         df = extract_table_to_df(html_content)
         
-        pattern = r'https:\/\/www\.punters\.com\.au\/form-guide\/(?P<place>[\w-]+)_(?P<id>\d+)'
+        # Extract id_ from the URL
+        pattern_url = r'https:\/\/www\.punters\.com\.au\/form-guide\/(?P<place>[\w-]+)_(?P<id>\d+)'
+        match_url = re.search(pattern_url, response.url)
+        if match_url:
+            id_ = match_url.group('id')
+            place_basic = match_url.group('place')
 
-        match = re.search(pattern, response.url)
-        if match:
-            place = match.group('place')
-            id_ = match.group('id')
-            print(f"place={place}")
-            print(f"id={id_}")
-        else:
-            print("Pattern not found in the provided URL.")
-        
+        # Extract title from the parsed HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
+        title_tag = soup.find('title')
+        if title_tag:
+            title_text = title_tag.string
+            # Use regex to match the first part of the title and convert it to the required format
+            match_title = re.search(r'([\w ]+R\d+)', title_text)
+            if match_title:
+                place = match_title.group(1).replace(' ', '-').lower()
+            else:
+                log.warning(f'Failed to extract place from title: {title_text}')
+
+
+
         # Extract the title
         soup = BeautifulSoup(response.text, 'html.parser')
         race_name = soup.title.string
 
-        print("=====================")
-        print(f"URL: {response.url}")
-        # print(df)
-        for _, row in df.iterrows():
-            horse_name = row['Horse Name']
-            punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
-
-        print("=====================")
+        log.info("=====================")
+        log.info(f"URL: {response.url}")
         
-        # Assuming response.url and df are defined earlier
-        match = re.search(r'_(\d+)/$', response.url)
-        if match:
-            possible_urls = []
-            number = match.group(1)  # Extracted number
-            possible_urls.append(f'https://www.punters.com.au/form-guide/spreadsheet-{number}')  # Formatted URL
 
-            for i in range (3):
-                date = (datetime.now()+timedelta(days=i)).strftime('%Y%m%d')
-                possible_urls.append(f'https://www.punters.com.au/form-guide/spreadsheet-{date}-{place}-{number}')
-            
+        file_url = ['https:\/\/www\.punters\.com\.au\/']
+
+        file_url_rel = response.xpath('//a[re:test(@href, "/form-guide/spreadsheet-\d+/")]/@href').get()
+        if file_url_rel:  # To ensure the element was found
+            file_url = response.urljoin(file_url_rel)
+            scrapy.Request(file_url, callback=self.parse_csv)
             headers = {
-                'User-Agent': 'Mozilla/5.0',
+                'User-Agent': 'Your User-Agent String',
+                'Referer': 'The Referer URL',
+                # Add other headers if necessary
             }
-
-            for url in possible_urls:
-                response = requests.get(url, headers=headers)
-                if response.status_code == 200:
-                    csv_data = StringIO(response.text)
-                    df2 = pd.read_csv(csv_data)
-                    df2[df2.columns[1:]] = df2[df2.columns[:-1]].values
-                    df_merged = pd.merge(df, df2, on='Horse Name')
-                    print(df_merged.columns)
-                    print(f'Total columns: {len(df_merged.columns)}')
-                    df_merged = df_merged.fillna('NA')
-
-                    for _, row in df_merged.iterrows():
-                        horse_name = row['Horse Name']
-                        punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
+            response = requests.get(file_url, headers=headers)
+            if response.status_code == 200:
+                csv_data = StringIO(response.text)
+                df2 = pd.read_csv(csv_data)
+                table_download_succes = True
+                df2[df2.columns[1:]] = df2[df2.columns[:-1]].values
+                df_merged = pd.merge(df, df2, on='Horse Name')
+                df_merged = df_merged.fillna('NA')
                     
-                    break  # Break the loop as we got a 200 status
-                else:
-                    print(f"Failed to download: {response.status_code}, trying next URL.")
-                    for _, row in df.iterrows():
-                        horse_name = row['Horse Name']
-                        punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
+                    
+            if not table_download_succes:
+                log.warning(f'Failed to download table from URLs: {possible_urls}')
+                df_merged=df
             
-
+            # save data
+            log.info(f'Saving columns: {len(df_merged.columns)}')
+            for _, row in df_merged.iterrows():
+                horse_name = row['Horse Name']
+                punters_com_au_collection.update_one({'Horse Name': horse_name}, {'$set': row.to_dict()}, upsert=True)
+        
+    def parse_csv(self, response):
+        # Reading CSV directly into Pandas DataFrame from response.body
+        csv_content = StringIO(response.text)
+        df = pd.read_csv(csv_content)
+        
 def extract_table_to_df(html):
     soup = BeautifulSoup(html, 'html.parser')
     table = soup.find("table", class_="form-guide-overview__table unresulted")
@@ -140,14 +147,26 @@ def extract_table_to_df(html):
                       'Career', 'Rtg', 'W%', 'P%', 'Avg $', 'Wgt', 'Bar', 'Odds'])
 
     return df
-
+def reset_logging():
+    # Get the root logger
+    root_logger = logging.getLogger()
+    # Remove all existing handlers from the root logger
+    for handler in root_logger.handlers:
+        root_logger.removeHandler(handler)
+    # Add a new handler
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.CRITICAL)
+    root_logger.addHandler(ch)
 
 if __name__ == "__main__":
-    process = CrawlerProcess(settings={
-        'FEEDS': {
-            'items.json': {'format': 'json'},
-        }
-    })
+
+    process = CrawlerProcess(settings={})
+    reset_logging()
+    logging.basicConfig(level=logging.CRITICAL)
+    logging.getLogger('scrapy').propagate = False
+    logging.getLogger('scrapy').setLevel(logging.ERROR)
+    logging.getLogger('urllib3').propagate = False
+    logging.getLogger('urllib3').setLevel(logging.ERROR)  
 
     process.crawl(RacesSpider)
     process.start()
