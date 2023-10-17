@@ -109,7 +109,7 @@ async def open_orders():
         orders = response.orders
         # Convert orders to a format suitable for JSON serialization
         orders_json = [{'bet_id': order.bet_id, 'status': order.status,
-                        'price': order.price, 'size': order.size} for order in orders]
+                        'price': order.average_price_matched} for order in orders]
         return {"orders": orders_json}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
