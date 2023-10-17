@@ -293,3 +293,12 @@ items.json
 default*.log.*
 *.log
 default.log.*
+*.1
+*.2
+*.3
+*.4
+*.6
+*.5
+*.7
+*.8
+*.9

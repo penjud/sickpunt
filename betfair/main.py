@@ -130,7 +130,14 @@ async def save_strategy(strategy_config: Dict):
         update_query = {'$set': strategy_config}
 
         # Assuming you're using pymongo to interact with MongoDB
-        strategy_collection.update_one(filter_query, update_query, upsert=True)
+        existing_doc = strategy_collection.find_one(filter_query)
+
+        if existing_doc:
+            # Replace the existing document
+            strategy_collection.replace_one(filter_query, strategy_config)
+        else:
+            # Insert new document
+            strategy_collection.insert_one(update_query)
 
         return {"message": "Strategy successfully saved"}
 
@@ -298,4 +305,4 @@ if __name__ == '__main__':
     ff_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     last_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
 
-    uvicorn.run(app, host="0.0.0.0", port=7779)
+    uvicorn.run(app, host="0.0.0.0", port=7777)
