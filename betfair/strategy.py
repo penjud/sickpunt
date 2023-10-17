@@ -128,7 +128,7 @@ class StrategyHandler:
                         if not (float(item_value['min']) <= float(horse_info_dict[item_name]) <= float(item_value['max'])):
                             condition_met = False
                             update_strategy_status(
-                                ff, market_id, strategy_name, selection_id, comment=f'{item_name} condition not met')
+                                ff, market_id, strategy_name, selection_id, comment=f'{item_name} condition not met {item_value["min"]} <= {round(horse_info_dict[item_name],2)} <= {item_value["max"]}')
 
                     if not condition_met:
                         continue

@@ -188,7 +188,7 @@ async def last_prices(websocket: WebSocket):
             log.error(f"Offending data: {converted_ff_cache}")
             # Optionally, re-raise the exception if you want the error to propagate
             # raise
-        await asyncio.sleep(.1)
+        await asyncio.sleep(.5)
 
 
 class StreamWithReconnect:
