@@ -151,6 +151,8 @@ class StrategyHandler:
                             if order_found:
                                 update_strategy_status(
                                     ff, market_id, strategy_name, selection_id, comment='Order already placed')
+                                update_strategy_status(
+                                    ff, market_id, strategy_name, comment='Bets placed')
                                 continue
 
                         status, bet_id, average_price_matched = 'dummy', 'dummy', 'dummy'

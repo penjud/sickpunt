@@ -128,6 +128,7 @@ function Strategy() {
       .then(response => {
         console.log("Response from server:", response.data);
         load_available_strategies();
+        loadStrategy();
         displayAlert('Strategy successfully saved', 'success');
       })
       .catch(error => {
@@ -169,7 +170,6 @@ function Strategy() {
 
         // Update the state to re-render your component
         setData(mergedData);
-        displayAlert('Strategy loaded', 'success');
       })
       .catch(error => {
         console.error('Error loading strategy:', error);
