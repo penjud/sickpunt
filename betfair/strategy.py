@@ -126,19 +126,16 @@ class StrategyHandler:
                                 break
                         
                         try:
-                            val = horse_info_dict[item_name]
+                            if not (float(item_value['min']) <= horse_info_dict[item_name] <= float(item_value['max'])):
+                                condition_met = False
+                                update_strategy_status(
+                                    ff, market_id, strategy_name, selection_id, comment=f'{item_name} condition not met {item_value["min"]} <= {round(horse_info_dict[item_name],2)} <= {item_value["max"]}')
                         except Exception as e:
-                            log.warning(f"Error getting {item_name} from horse_info_dict: {e}")
+                            log.warning(f"Error {item_name} not a number: {e}")
                             condition_met = False
                             update_strategy_status(
-                                ff, market_id, strategy_name, selection_id, comment=f'{item_name} not found in data')
-                            continue
+                                ff, market_id, strategy_name, selection_id, comment=f'{item_name} not a number')
                         
-                        if not (float(item_value['min']) <= val <= float(item_value['max'])):
-                            condition_met = False
-                            update_strategy_status(
-                                ff, market_id, strategy_name, selection_id, comment=f'{item_name} condition not met {item_value["min"]} <= {round(horse_info_dict[item_name],2)} <= {item_value["max"]}')
-
                     if not condition_met:
                         continue
 
