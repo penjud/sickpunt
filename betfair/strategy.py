@@ -38,6 +38,8 @@ class StrategyHandler:
             
 
             for market_id, race_data in ff_copy.items():
+                update_strategy_status(
+                    ff, market_id, strategy_name, comment='Processing...')
                 race_market_type = race_dict[market_id]['market_type']
                 async with lock:
                     race_data2 = copy.copy(race_data)
