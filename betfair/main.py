@@ -238,9 +238,12 @@ async def connect_to_stream():
     )
     await stream_with_reconnect.run()
 
+
 async def schedule_stream_restart(interval_minutes=STREAM_RESTART_MINUTES):
     while True:
         log.info("Starting new streaming session")
+        # Get the latest race_ids here, if you need to fetch or update it dynamically
+        # For example: race_ids = fetch_new_race_ids()
         stream_task = asyncio.create_task(connect_to_stream())
         await asyncio.sleep(interval_minutes * 60)  # Convert minutes to seconds
         log.info("Stopping current streaming session")
@@ -249,6 +252,7 @@ async def schedule_stream_restart(interval_minutes=STREAM_RESTART_MINUTES):
             await stream_task
         except asyncio.CancelledError:
             pass
+
 
 
 async def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies):
@@ -315,4 +319,4 @@ if __name__ == '__main__':
     ff_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     last_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
 
-    uvicorn.run(app, host="0.0.0.0", port=7777)
+    uvicorn.run(app, host="0.0.0.0", port=7779)
