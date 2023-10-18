@@ -110,7 +110,7 @@ async def open_orders():
         # Convert orders to a format suitable for JSON serialization
         elements = [x for x in dir(orders[0]) if x[0]!='_' and x!='get']
         orders_json = [{element: getattr(order, element) for element in elements} for order in orders]
-        return {"orders": orders_json}
+        return orders_json
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

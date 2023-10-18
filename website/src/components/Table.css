@@ -2,19 +2,20 @@
 table {
     width: 100%;
     border-collapse: collapse;
-    border: 1px solid #e0e0e0; /* Frame around the table */
+    border: 1px solid #e0e0e0;
     font-family: Arial, sans-serif;
-    table-layout: fixed; /* Ensures uniform column widths */
+    table-layout: fixed;
     font-size: x-small;
 }
 
 /* Headers */
 th {
-    background-color: #f7f7f7; /* Light gray background */
-    color: #333; /* Dark text color */
+    background-color: #f7f7f7;
+    color: #333;
     border: 1px solid #e0e0e0;
     padding: 1px 5px;
     text-align: left;
+    white-space: nowrap;
 }
 
 /* Rows */
@@ -22,15 +23,18 @@ td {
     border: 1px solid #e0e0e0;
     padding: 1px 5px;
     text-align: left;
-    background-color: #fff; /* White background for rows */
+    background-color: #fff;
+    white-space: nowrap;  /* Prevent line breaks */
+    overflow-x: hidden;   /* Hide extra content */
+    text-overflow: ellipsis; /* Show ellipsis when content overflows */
 }
 
 /* Mouseover effect for rows */
 tbody tr:hover {
-    background-color: #e6f7ff; /* Light blue background on hover */
+    background-color: #e6f7ff;
 }
 
 /* Zebra stripe for odd rows */
 tbody tr:nth-child(odd) {
-    background-color: #f4f4f4; /* Light gray for odd rows */
+    background-color: #f4f4f4;
 }

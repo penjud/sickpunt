@@ -30,6 +30,13 @@ const Table = ({endpoint}) => {
         });
     }, [isManuallySorted]);
 
+    const displayHeaders = orders.length > 0 ? 
+    Object.keys(orders[0]).filter(header => 
+        orders.some(order => 
+            order[header] !== null && typeof order[header] !== 'undefined'
+        )
+    ) : [];
+    
 
     const handleSort = (key) => {
         setIsManuallySorted(true);
@@ -68,7 +75,7 @@ const Table = ({endpoint}) => {
                     <table>
                         <thead>
                             <tr>
-                                {headers.map(header => (
+                                {displayHeaders.map(header => (  // Use displayHeaders instead of headers
                                     <th key={header} onClick={() => handleSort(header)}>
                                         {header}
                                         {sortKey === header && (isSortAscending ? ' ↓': ' ↑' )}
@@ -79,7 +86,7 @@ const Table = ({endpoint}) => {
                         <tbody>
                             {filteredOrders.map(order => (
                                 <tr key={order.id}>
-                                    {headers.map(header => (
+                                    {displayHeaders.map(header => (  // Use displayHeaders instead of headers
                                         <td key={header}>{order[header]}</td>
                                     ))}
                                 </tr>
