@@ -197,8 +197,12 @@ class StreamWithReconnect:
         self.listener = listener
         self.market_filter = market_filter
         self.market_data_filter = market_data_filter
-        self.stream = None
-        self.output_queue = asyncio.Queue()
+
+    def update_market_filter(self, new_market_filter):
+        self.market_filter = new_market_filter
+
+    def update_market_data_filter(self, new_market_data_filter):
+        self.market_data_filter = new_market_data_filter
 
     @retry(wait=wait_exponential(multiplier=1, min=2, max=30))
     async def run(self):
@@ -220,11 +224,7 @@ class StreamWithReconnect:
             raise
 
 
-async def connect_to_stream():
-    listener = HorseRaceListener(
-        ff_cache, race_ids, last_cache, race_dict,
-        punters_com_au, horse_info_dict, runnerid_name_dict
-    )
+async def connect_to_stream(stream_with_reconnect):
     market_filter = streaming_market_filter(
         market_ids=list(race_ids)
     )
@@ -233,18 +233,21 @@ async def connect_to_stream():
         ladder_levels=3
     )
 
-    stream_with_reconnect = StreamWithReconnect(
-        client, listener, market_filter, market_data_filter
-    )
+    stream_with_reconnect.update_market_filter(market_filter)
+    stream_with_reconnect.update_market_data_filter(market_data_filter)
     await stream_with_reconnect.run()
 
 
 async def schedule_stream_restart(interval_minutes=STREAM_RESTART_MINUTES):
+    listener = HorseRaceListener(
+        ff_cache, race_ids, last_cache, race_dict,
+        punters_com_au, horse_info_dict, runnerid_name_dict
+    )
+    stream_with_reconnect = StreamWithReconnect(client, listener, None, None)
+    
     while True:
         log.info("Starting new streaming session")
-        # Get the latest race_ids here, if you need to fetch or update it dynamically
-        # For example: race_ids = fetch_new_race_ids()
-        stream_task = asyncio.create_task(connect_to_stream())
+        stream_task = asyncio.create_task(connect_to_stream(stream_with_reconnect))
         await asyncio.sleep(interval_minutes * 60)  # Convert minutes to seconds
         log.info("Stopping current streaming session")
         stream_task.cancel()
@@ -252,6 +255,7 @@ async def schedule_stream_restart(interval_minutes=STREAM_RESTART_MINUTES):
             await stream_task
         except asyncio.CancelledError:
             pass
+
 
 
 
