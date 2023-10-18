@@ -10,8 +10,27 @@ const MAX_RETRIES = 999999;
 
 const RaceStreamer: React.FC = () => {
   const [raceData, setRaceData] = useState<RaceData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);  
+  const [isLoading, setIsLoading] = useState(true); 
+  const [lastSortedTime, setLastSortedTime] = useState<number>(Date.now());
+
+  
   let retryCount = 0;
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setLastSortedTime(Date.now());
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    if (Date.now() - lastSortedTime >= 6000) {
+      const sortedData = [...raceData].sort((a, b) => a.secondsToStart - b.secondsToStart);
+      setRaceData(sortedData);
+    }
+  }, [lastSortedTime, raceData]);
+  
 
   const connectSocket = () => {
     const socket = new WebSocket(`ws://${API_URL}/ff_cache`);
@@ -58,8 +77,22 @@ const RaceStreamer: React.FC = () => {
         };
       });
 
-      // formattedData = formattedData.sort((a, b) => a.index - b.index);
-      setRaceData(formattedData);
+      setLastSortedTime((prevLastSortedTime) => {
+        const now = Date.now();
+        if (now - lastSortedTime >= 2000) {
+          console.log("Sorting");
+          const mergedData = [...raceData, ...formattedData];
+          const sortedData = mergedData.sort((a, b) => a.secondsToStart - b.secondsToStart);
+          setRaceData(sortedData);
+          setLastSortedTime(now);  // Update the last sorted time
+        } else {
+          const mergedData = [...raceData, ...formattedData];
+          setRaceData(mergedData);
+        }
+        return prevLastSortedTime; // keep the lastSortedTime unchanged
+      });
+    
+
     };
 
     socket.onclose = (event) => {

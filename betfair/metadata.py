@@ -14,7 +14,6 @@ from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, HOURS_TO_FETCH,
                             upsert_event_metadata)
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 async def get_current_event_metadata(race_ids, race_dict, race_data_available, horse_info_dict, runnerid_name_dict):
@@ -23,7 +22,7 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
         try:
             client.login_interactive()
         except:
-            print("Interactive login failed. Trying again in 1min.")
+            log.critical("Interactive login failed. Trying again in 1min.")
             await asyncio.sleep(60)
         now = datetime.utcnow()
         end_time = now + timedelta(hours=HOURS_TO_FETCH)
@@ -80,7 +79,8 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
             # print(datetime.now())
             # print (len(race_ids))
             # print (race_ids)
-            # print(current_races)
+            log.info("===========Current Races===========")
+            log.info(current_races)
 
             # print(race_datas)
             upsert_event_metadata(race_datas)

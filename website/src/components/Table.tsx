@@ -2,9 +2,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { API_URL } from '../helper/Constants';
-import './Orders.css';
+import './Table.css';
 
-function OrdersTable() {
+const Table = ({endpoint}) => {
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [sortKey, setSortKey] = useState('timestamp');  // <-- Add this line for sorting
@@ -13,7 +13,7 @@ function OrdersTable() {
     const [isManuallySorted, setIsManuallySorted] = useState(false);
 
     useEffect(() => {
-        axios.post(`http://${API_URL}/orders`,
+        axios.post(`http://${API_URL}/${endpoint}`,
             {
                 headers: {
                     'Content-Type': 'application/json',
@@ -26,7 +26,7 @@ function OrdersTable() {
             setIsLoading(false);
         })
         .catch(error => {
-            console.error('Error fetching orders:', error);
+            console.error('Error fetching:', error);
         });
     }, [isManuallySorted]);
 
@@ -92,4 +92,4 @@ function OrdersTable() {
     );
 }
 
-export default OrdersTable;
+export default Table;

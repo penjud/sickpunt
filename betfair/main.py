@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 from requests import request
 from tenacity import retry, wait_exponential
 
-from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,
+from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,STREAM_RESTART_MINUTES,
                             admin_collection, client, orders_collection,
                             strategy_collection)
 from betfair.helper import init_logger
@@ -105,11 +105,11 @@ async def get_strategies():
 async def open_orders():
     try:
         # Use the list_current_orders method to retrieve information about your orders
-        response = client.betting.list_current_orders()
+        response = client.betting.list_cleared_orders()
         orders = response.orders
         # Convert orders to a format suitable for JSON serialization
-        orders_json = [{'bet_id': order.bet_id, 'status': order.status,
-                        'price': order.average_price_matched} for order in orders]
+        elements = [x for x in dir(orders[0]) if x[0]!='_' and x!='get']
+        orders_json = [{element: getattr(order, element) for element in elements} for order in orders]
         return {"orders": orders_json}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -221,15 +221,12 @@ class StreamWithReconnect:
 
 
 async def connect_to_stream():
-    # Assuming 'client' and all filter variables are already defined
     listener = HorseRaceListener(
         ff_cache, race_ids, last_cache, race_dict,
         punters_com_au, horse_info_dict, runnerid_name_dict
     )
     market_filter = streaming_market_filter(
-        event_type_ids=EVENT_TYPE_IDS,
-        country_codes=COUNTRIES,
-        market_types=MARKET_TYPES,
+        market_ids=list(race_ids)
     )
     market_data_filter = streaming_market_data_filter(
         fields=['EX_MARKET_DEF', 'EX_ALL_OFFERS', 'EX_TRADED'],
@@ -240,6 +237,18 @@ async def connect_to_stream():
         client, listener, market_filter, market_data_filter
     )
     await stream_with_reconnect.run()
+
+async def schedule_stream_restart(interval_minutes=STREAM_RESTART_MINUTES):
+    while True:
+        log.info("Starting new streaming session")
+        stream_task = asyncio.create_task(connect_to_stream())
+        await asyncio.sleep(interval_minutes * 60)  # Convert minutes to seconds
+        log.info("Stopping current streaming session")
+        stream_task.cancel()
+        try:
+            await stream_task
+        except asyncio.CancelledError:
+            pass
 
 
 async def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies):
@@ -289,9 +298,10 @@ async def startup_event():
         loop.create_task(check_strategy(last_cache, ff_cache,
                          race_dict, runnerid_name_dict, strategies))
         loop.create_task(update_remaining_time(ff_cache))
-        loop.create_task(connect_to_stream())
+        loop.create_task(schedule_stream_restart())
     except Exception as e:
         log.critical(f"Error during startup: {e}")
+
 
 if __name__ == '__main__':
     strategy_handler = StrategyHandler()

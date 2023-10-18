@@ -280,9 +280,9 @@ function Strategy() {
         <label>Price:</label>
         <div className="selections">
           <select value={data.priceStrategy} onChange={(e) => handleChange('priceStrategy', e.target.value)}>
-            <option value="back">Last offered back (for laying) </option>
+            <option value="back">Highest offered back by layer </option>
             <option value="last">Last traded</option>
-            <option value="lay">Last offered lay (for backing)</option>
+            <option value="lay">Lowest offered lay by backer</option>
             <option value="_back_moving_avg">Back moving average</option>
             <option value="_lay_moving_avg">Lay moving average</option>
           </select>

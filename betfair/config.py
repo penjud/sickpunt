@@ -31,21 +31,23 @@ PASSWORD = admin_data['BetfairPassword']
 USERNAME = admin_data['BetfairLogin']
 
 # constants
-COUNTRIES = ['AU', 'UK', 'IE', 'US']
+COUNTRIES = ['UK', 'US', 'AU', 'IE']
 MARKET_TYPES = ['WIN']
-MAX_RACE_STREAMS = 15
+MAX_RACE_STREAMS = 10
 
 EVENT_TYPE_IDS = ['7']
-KEEP_AFTER_RACE_START_MIN = 60
-HOURS_TO_FETCH = 12
+KEEP_AFTER_RACE_START_MIN = 15
+HOURS_TO_FETCH = 6
+
+MARKET_FETCH_MINUTES = 5
+STREAM_RESTART_MINUTES = 5
 
 SERVER_NAMES = ['ip-172-31-35-26.ap-southeast-2.compute.internal']
 
-SECS_MARKET_FETCH_INTERVAL = 60
+SECS_MARKET_FETCH_INTERVAL = MARKET_FETCH_MINUTES * 60
 
 client = betfairlightweight.APIClient(
     username=USERNAME, password=PASSWORD, app_key=APP_KEY)
-client.login_interactive()
 
 
 def upsert_event_metadata(race_data):
