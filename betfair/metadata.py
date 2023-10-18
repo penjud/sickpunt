@@ -79,8 +79,8 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
             # print(datetime.now())
             # print (len(race_ids))
             # print (race_ids)
-            log.info("===========Current Races===========")
-            log.info(current_races)
+            # log.info("===========Current Races===========")
+            # log.info(current_races)
 
             # print(race_datas)
             upsert_event_metadata(race_datas)
