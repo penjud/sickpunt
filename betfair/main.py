@@ -85,6 +85,7 @@ async def save_admin(admin_dict: Dict):
 
 @app.post("/load_strategy")
 async def load_strategy(strategy_name: str):
+    log.info(race_ids)
     strategy_data = strategy_collection.find_one(
         {"StrategyName": strategy_name}, {"_id": 0})
 
@@ -223,8 +224,13 @@ class StreamWithReconnect:
             log.critical(f"Unhandled exception: {e}")
             raise
 
+    def stop(self):
+        if self.stream is not None:
+            # Add logic here to stop the stream. This depends on how your streaming client is implemented.
+            self.stream.stop()
 
 async def connect_to_stream(stream_with_reconnect):
+    log.info(f"Current race_ids: {race_ids}")  # Add debug log
     market_filter = streaming_market_filter(
         market_ids=list(race_ids)
     )
@@ -250,6 +256,10 @@ async def schedule_stream_restart(interval_minutes=STREAM_RESTART_MINUTES):
         stream_task = asyncio.create_task(connect_to_stream(stream_with_reconnect))
         await asyncio.sleep(interval_minutes * 60)  # Convert minutes to seconds
         log.info("Stopping current streaming session")
+        
+        # Stop the old stream
+        stream_with_reconnect.stop()
+        
         stream_task.cancel()
         try:
             await stream_task
