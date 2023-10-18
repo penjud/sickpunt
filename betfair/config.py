@@ -33,7 +33,7 @@ USERNAME = admin_data['BetfairLogin']
 # constants
 COUNTRIES = ['UK', 'US', 'AU', 'IE']
 MARKET_TYPES = ['WIN']
-MAX_RACE_STREAMS = 10
+MAX_RACE_STREAMS = 15
 
 EVENT_TYPE_IDS = ['7']
 KEEP_AFTER_RACE_START_MIN = 15

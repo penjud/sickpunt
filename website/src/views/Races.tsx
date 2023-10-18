@@ -80,7 +80,6 @@ const RaceStreamer: React.FC = () => {
       setLastSortedTime((prevLastSortedTime) => {
         const now = Date.now();
         if (now - lastSortedTime >= 2000) {
-          console.log("Sorting");
           const mergedData = [...raceData, ...formattedData];
           const sortedData = mergedData.sort((a, b) => a.secondsToStart - b.secondsToStart);
           setRaceData(sortedData);
