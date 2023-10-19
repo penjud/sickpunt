@@ -1,19 +1,20 @@
+import { CircularProgress } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import '../App.css';
+import Funds from '../components/Funds';
 import OpenOrdersTable from '../components/OpenOrdersTable';
 import { RaceChart } from '../components/RaceChart';
 import { API_URL } from '../helper/Constants';
 import { RaceData } from '../helper/Types';
-import { CircularProgress } from '@mui/material';
 
 const MAX_RETRIES = 999999;
 
 const RaceStreamer: React.FC = () => {
   const [raceData, setRaceData] = useState<RaceData[]>([]);
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
   const [lastSortedTime, setLastSortedTime] = useState<number>(Date.now());
 
-  
+
   let retryCount = 0;
 
   useEffect(() => {
@@ -30,7 +31,7 @@ const RaceStreamer: React.FC = () => {
       setRaceData(sortedData);
     }
   }, [lastSortedTime, raceData]);
-  
+
 
   const connectSocket = () => {
     const socket = new WebSocket(`ws://${API_URL}/ff_cache`);
@@ -89,7 +90,7 @@ const RaceStreamer: React.FC = () => {
         }
         return prevLastSortedTime; // keep the lastSortedTime unchanged
       });
-    
+
 
     };
 
@@ -128,30 +129,33 @@ const RaceStreamer: React.FC = () => {
 
   return (
     <div>
-    <div className="h1">Races</div>
-    {isLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <CircularProgress />
-          </div>
-    ) : (
-      raceData.map((race) => (
-        <>
-          <RaceChart
-            key={race.raceId}
-            raceId={race.raceId}
-            raceTitle={race.raceTitle}
-            horseData={race.horseData}
-            overrunBack={race.overrunBack}
-            overrunLay={race.overrunLay}
-            overrunLast={race.overrunLast}
-            secondsToStart={race.secondsToStart}
-            strategyStatus={race.strategyStatus}
-          />
-          <OpenOrdersTable data={race.orders} />
-        </>
-      ))
-    )}
-  </div>
+      <div className='fundsTable'>
+        <Funds />
+      </div>
+      <div className="h1">Races</div>
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <CircularProgress />
+        </div>
+      ) : (
+        raceData.map((race) => (
+          <>
+            <RaceChart
+              key={race.raceId}
+              raceId={race.raceId}
+              raceTitle={race.raceTitle}
+              horseData={race.horseData}
+              overrunBack={race.overrunBack}
+              overrunLay={race.overrunLay}
+              overrunLast={race.overrunLast}
+              secondsToStart={race.secondsToStart}
+              strategyStatus={race.strategyStatus}
+            />
+            <OpenOrdersTable data={race.orders} />
+          </>
+        ))
+      )}
+    </div>
   );
 };
 

@@ -1,13 +1,14 @@
 import React from 'react';
+import './SimpleTable.css'
 
-function SimpleTable({ data }) {
+const SimpleTable = ({ data }) => {
     // Check if data is null or undefined, or not an object, and set to an empty object if so
     const safeData = data && typeof data === 'object' ? data : {};
     const dataArray = Object.values(safeData);
     const headers = dataArray.length > 0 ? Object.keys(dataArray[0]) : [];
     // console.log(data);
     return (
-        <table border="1">
+        <table className = 'table-container'>
             <thead>
                 <tr>
                     <th>Placed orders:</th>
