@@ -102,7 +102,7 @@ async def save_admin(admin_dict: Dict):
         update_query = {'$set': admin_dict}
 
         # Assuming you're using pymongo to interact with MongoDB
-        admin_collection.update_one(filter_query, update_query, upsert=True)
+        admin_collection.update_one(filter_query, admin_dict, upsert=True)
 
         return {"message": "Admin successfully saved"}
 
@@ -141,7 +141,6 @@ async def save_strategy(strategy_config: Dict):
 
         # Define the filter and update query
         filter_query = {'StrategyName': strategy_name}
-        update_query = {'$set': strategy_config}
 
         # Assuming you're using pymongo to interact with MongoDB
         existing_doc = strategy_collection.find_one(filter_query)
@@ -151,7 +150,7 @@ async def save_strategy(strategy_config: Dict):
             strategy_collection.replace_one(filter_query, strategy_config)
         else:
             # Insert new document
-            strategy_collection.insert_one(update_query)
+            strategy_collection.insert_one(strategy_config)
 
         return {"message": "Strategy successfully saved"}
 
