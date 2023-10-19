@@ -71,7 +71,6 @@ const RaceStreamer: React.FC = () => {
           overrunLay: horses._lay_overrun,
           overrunLast: horses._last_overrun,
           secondsToStart: horses._seconds_to_start,
-          raceTitle: horses._race_title,
           orders: horses._orders,
           strategyStatus: horses._strategy_status,
         };

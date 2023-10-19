@@ -1,40 +1,32 @@
-/* Table styling */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1px solid #e0e0e0;
-    font-family: Arial, sans-serif;
-    table-layout: fixed;
-    font-size: x-small;
+.tabulator {
+  font-size: 9px;
 }
 
-/* Headers */
-th {
-    background-color: #f7f7f7;
-    color: #333;
-    border: 1px solid #e0e0e0;
-    padding: 1px 5px;
-    text-align: left;
-    white-space: nowrap;
+.table-wrapper {
+  margin: 0;
+  text-align: left;
+  width: 100%;
 }
 
-/* Rows */
-td {
-    border: 1px solid #e0e0e0;
-    padding: 1px 5px;
-    text-align: left;
-    background-color: #fff;
-    white-space: nowrap;  /* Prevent line breaks */
-    overflow-x: hidden;   /* Hide extra content */
-    text-overflow: ellipsis; /* Show ellipsis when content overflows */
+#root .react-tabulator {
+  margin: 0;
+  text-align: left;
+  width: 100%;
 }
 
-/* Mouseover effect for rows */
-tbody tr:hover {
-    background-color: #e6f7ff;
+.table-wrapper .tabulator-footer {
+  text-align: center !important;
 }
 
-/* Zebra stripe for odd rows */
-tbody tr:nth-child(odd) {
-    background-color: #f4f4f4;
+.pivot {
+  font-size: 70%;
+}
+
+.funds {
+  font-size: 70%;
+}
+.funds td {
+  text-align: left;
+  padding-left: 30px;
+  padding-right: 30px;
 }

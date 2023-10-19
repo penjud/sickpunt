@@ -1,102 +1,78 @@
-import CircularProgress from '@mui/material/CircularProgress';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import 'react-tabulator/lib/styles.css';
+import 'react-tabulator/css/tabulator.min.css';
+import { ReactTabulator } from 'react-tabulator';
+import CircularProgress from '@mui/material/CircularProgress';
 import { API_URL } from '../helper/Constants';
 import './Table.css';
 
-const Table = ({endpoint}) => {
-    const [orders, setOrders] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [sortKey, setSortKey] = useState('timestamp');  // <-- Add this line for sorting
-    const [isSortAscending, setIsSortAscending] = useState(false); // <-- Add this line for sorting direction
-    const [filter, setFilter] = useState('');  // <-- Add this line for filtering
-    const [isManuallySorted, setIsManuallySorted] = useState(false);
+const Table = ({ endpoint }: { endpoint: string }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<any[]>([]);
 
-    useEffect(() => {
-        axios.post(`http://${API_URL}/${endpoint}`,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-        )
-        .then(response => {
-            const sortedData = response.data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-            setOrders(sortedData);
-            setIsLoading(false);
-        })
-        .catch(error => {
-            console.error('Error fetching:', error);
-        });
-    }, [isManuallySorted]);
+  useEffect(() => {
+    axios
+      .post(`http://${API_URL}/${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      .then((response) => {
+        setData(response.data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error fetching:', error);
+      });
+  }, [endpoint]);
 
-    const displayHeaders = orders.length > 0 ? 
-    Object.keys(orders[0]).filter(header => 
-        orders.some(order => 
-            order[header] !== null && typeof order[header] !== 'undefined'
-        )
+  const nonEmptyColumns = data.length > 0 ? 
+    Object.keys(data[0]).filter(key =>
+      data.some(row => row[key] !== null && row[key] !== undefined)
     ) : [];
-    
 
-    const handleSort = (key) => {
-        setIsManuallySorted(true);
-        const sortedData = [...orders].sort((a, b) => {
-            const valA = key === 'timestamp' ? new Date(a[key]).toISOString() : a[key];
-            const valB = key === 'timestamp' ? new Date(b[key]).toISOString() : b[key];
-      
-            if (valA < valB) return isSortAscending ? -1 : 1;
-            if (valA > valB) return isSortAscending ? 1 : -1;
-            return 0;
-        });
-    
-        setOrders(sortedData);
-        setSortKey(key);
-        setIsSortAscending(!isSortAscending);
-    };
-    
+  const columns = nonEmptyColumns.map((key) => ({
+    title: key,
+    field: key,
+    sorter: 'string',
+    headerFilter: 'input'
+  }));
 
-    const filteredOrders = orders.filter(order => {
-        return Object.values(order).some(value =>
-            String(value).toLowerCase().includes(filter.toLowerCase())
-        );
-    });
+  const options = {
+    pagination: 'local',
+    paginationSize: 30,
+    layout: 'fitDataFill',
+    initialSort: [
+      { column: 'timestamp', dir: 'desc' }
+    ],
+    columnVertAlign: 'top',
+    dataTree: true,
+    dataTreeStartExpanded: false
+  };
 
-    const headers = orders.length > 0 ? Object.keys(orders[0]) : [];
-
-    return (
-        <div>
-            {isLoading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-                    <CircularProgress />
-                </div>
-            ) : (
-                <div>
-                    <input type="text" placeholder="Filter..." onChange={(e) => setFilter(e.target.value)} />
-                    <table>
-                        <thead>
-                            <tr>
-                                {displayHeaders.map(header => (  // Use displayHeaders instead of headers
-                                    <th key={header} onClick={() => handleSort(header)}>
-                                        {header}
-                                        {sortKey === header && (isSortAscending ? ' ↓': ' ↑' )}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredOrders.map(order => (
-                                <tr key={order.id}>
-                                    {displayHeaders.map(header => (  // Use displayHeaders instead of headers
-                                        <td key={header}>{order[header]}</td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+  return (
+    <div className="table-wrapper">
+      {isLoading ? (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '50vh',
+          }}
+        >
+          <CircularProgress />
         </div>
-    );
-}
+      ) : (
+        <ReactTabulator
+          data={data}
+          columns={columns}
+          options={options}
+        />
+      )}
+    </div>
+  );
+};
 
 export default Table;

@@ -9,6 +9,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Dict
 
+import numpy as np
+import pandas as pd
 import pytz
 import uvicorn
 import websockets
@@ -22,9 +24,9 @@ from pydantic import BaseModel, Field
 from requests import request
 from tenacity import retry, wait_exponential
 
-from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,STREAM_RESTART_MINUTES,
-                            admin_collection, client, orders_collection,
-                            strategy_collection)
+from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,
+                            STREAM_RESTART_MINUTES, admin_collection, client,
+                            orders_collection, strategy_collection)
 from betfair.helper import init_logger
 from betfair.metadata import get_current_event_metadata
 from betfair.strategy import StrategyHandler
@@ -47,16 +49,41 @@ race_data_available = asyncio.Event()
 betfair_socket = None
 log = logging.getLogger(__name__)
 
-
-
 @app.post("/orders")
-async def get_orders():
-    """
-    Returns the contents of the `orders_collection` in MongoDB.
+async def orders():
+    
+        bot_orders_json = list(orders_collection.find({}, {'_id': False}))
 
-    :return: List of orders
-    """
-    return list(orders_collection.find({}, {'_id': False}))
+        # Use the list_current_orders method to retrieve information about your orders
+        response = client.betting.list_cleared_orders()
+        orders = response.orders
+        # Convert orders to a format suitable for JSON serialization
+        elements = [x for x in dir(orders[0]) if x[0]!='_' and x!='get']
+        betfair_orders_json = [{element: getattr(order, element) for element in elements} for order in orders]
+
+        betfair_df = pd.DataFrame(betfair_orders_json)
+        bot_df = pd.DataFrame(bot_orders_json)
+        
+        df = pd.merge(bot_df, betfair_df, on=['bet_id'], how='outer')
+        df = df.drop(['handicap','price_reduced','selection_id_y','customer_order_ref',
+                      'customer_strategy_ref','persistence_type_x','market_id_y', 'persistence_type_y',
+                      'market_id_y','side_y','selection_id_x','oder_type','size-cancelled','item_description','event_type_id',
+                      'comission','average_price_matched'], axis=1, errors='ignore')
+        df = df.fillna(0)
+        floats = ['profit','bet_count','commission','last_back','last_lay','last_traded','price','price_matched','size','total_matched']
+        
+        for fl in floats:
+            df[fl] = df[fl].astype(float)
+        
+    
+        return json.loads(df.to_json(orient='records'))
+
+@app.post("/balance")
+async def balance():
+    resp = client.account.get_account_funds()
+    return {'Available Funds': resp.available_to_bet_balance,
+            'Current exposure': -resp.exposure,
+            'Total Funds':  resp.available_to_bet_balance-resp.exposure}
 
 
 @app.post("/load_admin")
@@ -85,7 +112,7 @@ async def save_admin(admin_dict: Dict):
 
 @app.post("/load_strategy")
 async def load_strategy(strategy_name: str):
-    log.info(race_ids)
+    # log.info(race_ids)
     strategy_data = strategy_collection.find_one(
         {"StrategyName": strategy_name}, {"_id": 0})
 
@@ -100,20 +127,6 @@ async def get_strategies():
     # Finding distinct strategy names
     strategy_names = strategy_collection.distinct("StrategyName")
     return {"strategies": strategy_names}
-
-
-@app.post("/open_orders")
-async def open_orders():
-    try:
-        # Use the list_current_orders method to retrieve information about your orders
-        response = client.betting.list_cleared_orders()
-        orders = response.orders
-        # Convert orders to a format suitable for JSON serialization
-        elements = [x for x in dir(orders[0]) if x[0]!='_' and x!='get']
-        orders_json = [{element: getattr(order, element) for element in elements} for order in orders]
-        return orders_json
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/save_strategy")
@@ -230,7 +243,7 @@ class StreamWithReconnect:
             self.stream.stop()
 
 async def connect_to_stream(stream_with_reconnect):
-    log.info(f"Current race_ids: {race_ids}")  # Add debug log
+    # log.info(f"Current race_ids: {race_ids}")  # Add debug log
     market_filter = streaming_market_filter(
         market_ids=list(race_ids)
     )
@@ -333,4 +346,4 @@ if __name__ == '__main__':
     ff_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     last_cache = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
 
-    uvicorn.run(app, host="0.0.0.0", port=7777)
+    uvicorn.run(app, host="0.0.0.0", port=7779)

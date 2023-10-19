@@ -21,8 +21,8 @@ export const OverrunComponent = ({ overrunBack, overrunLay, overrunLast }) => {
     }, [overrunLay]);
 
     return (
-        <p style={{ background: isHighlighted ? 'red' : 'transparent' }}>
-            Overruns (bk/ly/lt) {overrunBack.toFixed(2)}
+        <p style={{ background: isHighlighted ? 'transparent' : 'transparent' }}>
+            Sum of odds (back/lay/last) {overrunBack.toFixed(2)}
             /{overrunLay.toFixed(2)}
             / {overrunLast.toFixed(2)}
         </p>

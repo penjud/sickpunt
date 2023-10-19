@@ -1,0 +1,10 @@
+version: '3'
+services:
+  backend:
+    build: ./path/to/python/app
+    ports:
+      - "7777:7777"
+  frontend:
+    build: ./path/to/react/app
+    ports:
+      - "3000:80"

@@ -186,7 +186,7 @@ class StrategyHandler:
                                  'last_back': horse['back'],
                                  'side': bet_type,
                                  'persistence_type': persistent_type,
-                                 'timestamp':  datetime.now().strftime('%d/%m/%Y %M:%S'),
+                                 'timestamp':  datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
                                  'seconds_to_start': -race_data2['_seconds_to_start'],
                                  'status': status,
                                  'bet_id': bet_id,
