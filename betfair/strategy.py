@@ -135,7 +135,9 @@ class StrategyHandler:
                             horse_name = selection_id
                             
                         # max horses to bet per race restriction
-                        if len(ff[market_id]['_orders']) >= max_horses_to_bet:
+                        strategy_race_order_count = len(
+                            [order for order in ff_copy[market_id]['_orders'] if order.get('strategy_name') == strategy_name])
+                        if strategy_race_order_count >= max_horses_to_bet:
                             update_strategy_status(
                                 ff, market_id, strategy_name, comment=f'Already bet on {max_horses_to_bet} horses.')
                             break
@@ -220,6 +222,7 @@ class StrategyHandler:
                             log.info(f"Placed order: {order}")
                             if isinstance(ff[market_id]['_orders'], list):
                                 ff[market_id]['_orders'].append(order)
+                                ff_copy[market_id]['_orders'].append(order)
                             else:
                                 ff[market_id]['_orders'] = [order]
                             orders_collection.insert_one(copy.copy(order))
