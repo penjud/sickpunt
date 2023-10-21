@@ -31,7 +31,7 @@ from betfair.helper import init_logger
 from betfair.metadata import get_current_event_metadata
 from betfair.strategy import StrategyHandler
 from betfair.streamer import HorseRaceListener
-from api import app
+from betfair.api import app
 
 lock = asyncio.Lock()
 
