@@ -6,7 +6,7 @@ import betfairlightweight
 from pymongo import MongoClient
 
 USERNAME = "default"
-HOSTNAME = '3.24.169.161'
+HOSTNAME = '127.0.0.1'
 MONGO_USERNAME = "sickpunt"
 MONGO_PASSWROD = "sickpunt123"
 MONGO_DB = "horse_racing"  # The database you want to connect to
