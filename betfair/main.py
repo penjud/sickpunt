@@ -35,9 +35,7 @@ from betfair.api import app
 
 lock = asyncio.Lock()
 
-
 init_logger(screenlevel=logging.INFO, filename='default')
-
 
 race_data_available = asyncio.Event()
 betfair_socket = None
@@ -118,6 +116,12 @@ async def load_strategy(strategy_name: str):
         return strategy_data
     else:
         raise HTTPException(status_code=404, detail="Strategy not found")
+
+@app.post("/delete_strategy")
+async def delete_strategy(strategy_name: str):
+    # log.info(race_ids)
+    res = strategy_collection.delete_one(
+        {"StrategyName": strategy_name})
 
 
 @app.post("/get_strategies")

@@ -128,7 +128,7 @@ function Strategy() {
       .then(response => {
         console.log("Response from server:", response.data);
         load_available_strategies();
-        loadStrategy();
+        loadStrategy(data.StrategyName);
         displayAlert('Strategy successfully saved', 'success');
       })
       .catch(error => {
@@ -141,7 +141,7 @@ function Strategy() {
     axios.post(`http://${API_URL}/get_strategies`)
       .then(res => {
         setAvailableStrategies(res.data.strategies || []);
-        console.log('Available Strategies:', res.data.strategies);
+        // console.log('Available Strategies:', res.data.strategies);
         setData(defaultAttributesConfig);
       })
       .catch(error => {
@@ -156,20 +156,38 @@ function Strategy() {
 
 
 
-  const loadStrategy = () => {
-    console.log("Loading Strategy:", selectedStrategy);  // Debug log
+  const loadStrategy = (strat) => {
+    const strategyToLoad = typeof strat === 'string' ? strat : selectedStrategy;
+    setSelectedStrategy(strategyToLoad);
+    console.log("Loading Strategy:", strategyToLoad);  // Debug log
 
     // Initialize data with defaultAttributesConfig
     setData(defaultAttributesConfig);
     console.log("data before loading:", data)
 
-    axios.post(`http://${API_URL}/load_strategy`, null, { params: { strategy_name: selectedStrategy } })
+    axios.post(`http://${API_URL}/load_strategy`, null, { params: { strategy_name: strategyToLoad } })
       .then(res => {
         // Merge the default attributes with the loaded strategy data
         const mergedData = { ...defaultAttributesConfig, ...res.data };
 
         // Update the state to re-render your component
         setData(mergedData);
+      })
+      .catch(error => {
+        console.error('Error loading strategy:', error);
+        displayAlert('Failed to load strategy', 'danger');
+      });
+  };
+
+  const deleteStrategy = () => {
+    setSelectedStrategy(selectedStrategy);
+
+    axios.post(`http://${API_URL}/delete_strategy`, null, { params: { strategy_name: selectedStrategy } })
+      .then(res => {
+        setAvailableStrategies([]);
+        load_available_strategies();
+        console.log("Response from server:", res.data);
+        displayAlert('Strategy successfully deleted', 'success');
       })
       .catch(error => {
         console.error('Error loading strategy:', error);
@@ -198,6 +216,7 @@ function Strategy() {
             ))}
           </select>
           <button onClick={loadStrategy}>Load</button>
+          <button  style={{ backgroundColor: 'red', color: 'white' }}  onClick={deleteStrategy}>Del</button>
         </div>
       </div>
 
@@ -264,8 +283,6 @@ function Strategy() {
         </div>
   
       </div>
-
-
 
 
 

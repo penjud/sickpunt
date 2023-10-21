@@ -68,7 +68,7 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
                     race_data['marketStartTime']).replace(tzinfo=pytz.utc),
                     'runners': race_data['runners'],
                     'event': race_data['event'],
-                    'marketName': race_data['marketName'] + ' ' + race_data['event']['name'],
+                    'marketName': race_data['marketName'] + ' ' + race_data['event']['name']+ ' ' + race_data['event']['countryCode'],
                     'market_type': market_type,
                     'totalMatched': race_data['totalMatched']}
 
@@ -76,12 +76,6 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
 
             # remove all elements in race_ids that are not in current_races
             race_ids.intersection_update(current_races)
-            # print('----')
-            # print(datetime.now())
-            # print (len(race_ids))
-            # print (race_ids)
-            # log.info("===========Current Races===========")
-            # log.info(current_races)
 
             # print(race_datas)
             upsert_event_metadata(race_datas)
