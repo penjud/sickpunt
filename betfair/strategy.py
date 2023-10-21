@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import logging
+import re
 import threading
 from datetime import datetime
 
@@ -13,6 +14,21 @@ from betfair.config import is_prod_computer, orders_collection
 
 log = logging.getLogger(__name__)
 lock = asyncio.Lock()
+
+def extract_real(value):
+    # If value is already a float or int, return it
+    if isinstance(value, (float, int)):
+        return value
+    
+    # Extract only the digits and a single dot using regex
+    num_str = ''.join(re.findall(r'[0-9.]', value))
+    
+    # Handle cases with multiple dots by keeping only the first one
+    parts = num_str.split('.')
+    if len(parts) > 2:
+        num_str = parts[0] + '.' + ''.join(parts[1:])
+    
+    return float(num_str)
 
 class StrategyHandler:
     def __init__(self) -> None:
@@ -96,9 +112,7 @@ class StrategyHandler:
                         log.warning(f"Price strategy {price_strategy} not found in data")
                         update_strategy_status(ff, market_id, strategy_name, comment='Price strategy not found in data')
                         continue
-
-                    df = df.head(max_horses_to_bet)
-
+                    
                     for selection_id, horse in df.iterrows():
 
                         # check for selected conditions in strategy
@@ -115,6 +129,18 @@ class StrategyHandler:
                         horse_info_dict['Back total odds'] = back_total_odds
                         horse_info_dict['Lay total odds'] = lay_total_odds
                         
+                        try:
+                            horse_name = runnerid_name_dict[int(selection_id)]
+                        except KeyError:
+                            horse_name = selection_id
+                            
+                        # max horses to bet per race restriction
+                        if len(ff[market_id]['_orders']) >= max_horses_to_bet:
+                            update_strategy_status(
+                                ff, market_id, strategy_name, comment=f'Already bet on {max_horses_to_bet} horses.')
+                            break
+                        
+                        # Check conditions
                         for item_name, item_value in strategy.items():
                             if not isinstance(item_value, dict): # can be limited to condition items
                                 continue
@@ -128,10 +154,12 @@ class StrategyHandler:
                                     break
                             
                             try:
-                                if not (float(item_value['min']) <= horse_info_dict[item_name] <= float(item_value['max'])):
+                                
+                                item_as_num = extract_real(horse_info_dict[item_name])
+                                if not (float(item_value['min']) <= item_as_num <= float(item_value['max'])):
                                     condition_met = False
                                     update_strategy_status(
-                                        ff, market_id, strategy_name, selection_id, comment=f'{item_name} condition not met {item_value["min"]} <= {round(horse_info_dict[item_name],2)} <= {item_value["max"]}')
+                                        ff, market_id, strategy_name, selection_id, comment=f'{item_name} condition not met {item_value["min"]} <= {round(item_as_num,2)} <= {item_value["max"]}')
                             except Exception as e:
                                 log.warning(f"Error {item_name} not a number: {e}")
                                 condition_met = False
@@ -141,30 +169,24 @@ class StrategyHandler:
                         if not condition_met:
                             continue
 
-                        price = horse[price_strategy]
-                        price = min(max(price, float(price_min_value)),
-                                    float(price_max_value))
-                        price = price_adjustment(price)
-
-                        try:
-                            horse_name = runnerid_name_dict[int(selection_id)]
-                        except KeyError:
-                            horse_name = selection_id
-
+                        # check we have no order for that horse already
+                        orders = ff[market_id]['_orders']
+                        if orders:
+                            for order in orders:
+                                if order['selection_id'] == selection_id:
+                                    order_found = True
+                            if order_found:
+                                update_strategy_status(
+                                    ff, market_id, strategy_name, selection_id, comment='Order already placed')
+                                update_strategy_status(
+                                    ff, market_id, strategy_name, comment='Bets placed')
+                                continue
+                            
                         if active in ['dummy', 'on']:
-                            # check we have no order for that horse already
-                            orders = ff[market_id]['_orders']
-                            if orders:
-                                for order in orders:
-                                    if order['selection_id'] == selection_id:
-                                        order_found = True
-                                if order_found:
-                                    update_strategy_status(
-                                        ff, market_id, strategy_name, selection_id, comment='Order already placed')
-                                    update_strategy_status(
-                                        ff, market_id, strategy_name, comment='Bets placed')
-                                    continue
-
+                            price = horse[price_strategy]
+                            price = min(max(price, float(price_min_value)),
+                                    float(price_max_value))
+                            price = price_adjustment(price)
                             status, bet_id, average_price_matched = 'dummy', 'dummy', 'dummy'
                             if active == 'on': # and is_prod_computer():
                                 log.info(

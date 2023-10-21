@@ -31,20 +31,14 @@ from betfair.helper import init_logger
 from betfair.metadata import get_current_event_metadata
 from betfair.strategy import StrategyHandler
 from betfair.streamer import HorseRaceListener
+from api import app
 
 lock = asyncio.Lock()
 
 
 init_logger(screenlevel=logging.INFO, filename='default')
 
-app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # You might want to be more specific in production.
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 race_data_available = asyncio.Event()
 betfair_socket = None
 log = logging.getLogger(__name__)
@@ -63,14 +57,18 @@ async def orders():
 
         betfair_df = pd.DataFrame(betfair_orders_json)
         bot_df = pd.DataFrame(bot_orders_json)
+        bot_df['bet_id'] = bot_df['bet_id'].astype(str)
+        betfair_df['bet_id'] = betfair_df['bet_id'].astype(str)
         
         df = pd.merge(bot_df, betfair_df, on=['bet_id'], how='outer')
         df = df.drop(['handicap','price_reduced','selection_id_y','customer_order_ref',
                       'customer_strategy_ref','persistence_type_x','market_id_y', 'persistence_type_y',
                       'market_id_y','side_y','selection_id_x','oder_type','size-cancelled','item_description','event_type_id',
-                      'comission','average_price_matched'], axis=1, errors='ignore')
+                      'comission','average_price_matched', 'bet_count',
+                      'bet_id','commission','event_id','size_cancelled',
+                      'user','event_id'], axis=1, errors='ignore')
         df = df.fillna(0)
-        floats = ['profit','bet_count','commission','last_back','last_lay','last_traded','price','price_matched','size','total_matched']
+        floats = ['profit','last_back','last_lay','last_traded','price','price_matched','size','total_matched']
         
         for fl in floats:
             df[fl] = df[fl].astype(float)

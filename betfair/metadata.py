@@ -40,7 +40,8 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
                     'to': end_time.isoformat()
                 },
                 'marketTypeCodes': [market_type],
-                'marketCountries': COUNTRIES  # UK and IE market countries
+                'marketCountries': COUNTRIES,  # UK and IE market countries
+                'raceTypes': ['Flat','Harness','Steepe','Hurdle']
             }
 
             # Retrieve the list of races
@@ -67,7 +68,7 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
                     race_data['marketStartTime']).replace(tzinfo=pytz.utc),
                     'runners': race_data['runners'],
                     'event': race_data['event'],
-                    'marketName': race_data['marketName']+' '+race_data['event']['name'],
+                    'marketName': race_data['marketName'] + ' ' + race_data['event']['name'],
                     'market_type': market_type,
                     'totalMatched': race_data['totalMatched']}
 

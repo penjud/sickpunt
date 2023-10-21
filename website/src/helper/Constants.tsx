@@ -21,6 +21,7 @@ export const DATA_ATTRIBUTES = [
     "Rtg",
     "W%",
     "Wgt",
+    
     "Age",
     "Apprentice",
     "Average Prize Money",

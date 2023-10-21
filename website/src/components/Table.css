@@ -1,17 +1,6 @@
 .tabulator {
-  font-size: 9px;
-}
-
-.table-wrapper {
-  margin: 0;
-  text-align: left;
-  width: 100%;
-}
-
-#root .react-tabulator {
-  margin: 0;
-  text-align: left;
-  width: 100%;
+  font-size: 8px;
+  
 }
 
 .table-wrapper .tabulator-footer {

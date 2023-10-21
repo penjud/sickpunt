@@ -6,7 +6,7 @@ import betfairlightweight
 from pymongo import MongoClient
 
 USERNAME = "default"
-HOSTNAME = '127.0.0.1'
+HOSTNAME = '3.24.169.161'
 MONGO_USERNAME = "sickpunt"
 MONGO_PASSWROD = "sickpunt123"
 MONGO_DB = "horse_racing"  # The database you want to connect to
@@ -34,7 +34,6 @@ USERNAME = admin_data['BetfairLogin']
 COUNTRIES = ['UK', 'US', 'AU', 'IE']
 MARKET_TYPES = ['WIN']
 MAX_RACE_STREAMS = 15
-
 EVENT_TYPE_IDS = ['7']
 KEEP_AFTER_RACE_START_MIN = 15
 HOURS_TO_FETCH = 8
