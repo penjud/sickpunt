@@ -303,3 +303,4 @@ default.log.*
 *.8
 *.9
 betfair.pem
+default*.*
