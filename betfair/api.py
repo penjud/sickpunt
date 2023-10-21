@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_jwt_auth import AuthJWT
-from fastapi_jwt_auth.exceptions import AuthJWTException
+# from fastapi_jwt_auth.exceptions import AuthJWTException
 from flask_jwt_extended import jwt_required
 from pydantic import BaseModel, Field
 
@@ -28,12 +28,12 @@ app.add_middleware(
 # in production, you can tweak performance using orjson response
 
 
-@app.exception_handler(AuthJWTException)
-def authjwt_exception_handler(request: Request, exc: AuthJWTException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message}
-    )
+# @app.exception_handler(AuthJWTException)
+# def authjwt_exception_handler(request: Request, exc: AuthJWTException):
+#     return JSONResponse(
+#         status_code=exc.status_code,
+#         content={"detail": exc.message}
+#     )
 
 # provide a method to create access tokens. The create_access_token()
 # function is used to actually generate the token to use authorization

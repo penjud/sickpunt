@@ -19,6 +19,13 @@ log = logging.getLogger(__name__)
 COMPUTER_NAME = os.getenv('COMPUTERNAME')
 ON_CI = os.environ.get('ENV') != 'CI'
 
+def running_in_docker():
+    try:
+        with open('/proc/1/cgroup', 'rt') as ifh:
+            return 'docker' in ifh.read()
+    except FileNotFoundError:
+        return False
+
 class Singleton(type):
     """
     Singleton Metaclass.

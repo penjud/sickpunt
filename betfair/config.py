@@ -5,8 +5,13 @@ import socket
 import betfairlightweight
 from pymongo import MongoClient
 
+from betfair.helper import running_in_docker
+
 USERNAME = "default"
-HOSTNAME = '127.0.0.1'
+if running_in_docker():
+    HOSTNAME = 'host.docker.internal'
+else:
+    HOSTNAME = '127.0.0.1'
 MONGO_USERNAME = "sickpunt"
 MONGO_PASSWROD = "sickpunt123"
 MONGO_DB = "horse_racing"  # The database you want to connect to
@@ -76,3 +81,5 @@ tick_sizes = [(1.01, 2, 0.01),
               (32, 50, 2.),
               (55, 100, 5.),
               (110, 1000, 10.)]
+
+
