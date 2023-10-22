@@ -3,8 +3,8 @@ import 'bootstrap/dist/css/bootstrap.css';
 import { useEffect, useState } from 'react';
 import ConditionsManager from '../components/StrategyEditor/ConditionsManager';
 import { API_URL, DATA_ATTRIBUTES } from '../helper/Constants';
-import './Strategy.css';
 import CustomSlider from './CustomSlider';
+import './Strategy.css';
 
 interface IAttributesConfig {
   active: string;
@@ -180,19 +180,23 @@ function Strategy() {
   };
 
   const deleteStrategy = () => {
-    setSelectedStrategy(selectedStrategy);
+    if (window.confirm('Are you sure you want to delete this strategy?')) {
+      setSelectedStrategy(selectedStrategy);
 
-    axios.post(`http://${API_URL}/delete_strategy`, null, { params: { strategy_name: selectedStrategy } })
-      .then(res => {
-        setAvailableStrategies([]);
-        load_available_strategies();
-        console.log("Response from server:", res.data);
-        displayAlert('Strategy successfully deleted', 'success');
-      })
-      .catch(error => {
-        console.error('Error loading strategy:', error);
-        displayAlert('Failed to load strategy', 'danger');
-      });
+      axios.post(`http://${API_URL}/delete_strategy`, null, { params: { strategy_name: selectedStrategy } })
+        .then(res => {
+          setAvailableStrategies([]);
+          load_available_strategies();
+          console.log("Response from server:", res.data);
+          displayAlert('Strategy successfully deleted', 'success');
+        })
+        .catch(error => {
+          console.error('Error loading strategy:', error);
+          displayAlert('Failed to load strategy', 'danger');
+        });
+    } else {
+      displayAlert('Strategy deletion cancelled', 'warning');
+    }
   };
 
 
@@ -216,7 +220,7 @@ function Strategy() {
             ))}
           </select>
           <button onClick={loadStrategy}>Load</button>
-          <button  style={{ backgroundColor: 'red', color: 'white' }}  onClick={deleteStrategy}>Del</button>
+          <button style={{ backgroundColor: 'red', color: 'white' }} onClick={deleteStrategy}>Del</button>
         </div>
       </div>
 
@@ -275,13 +279,13 @@ function Strategy() {
             Back
           </label>
           <div className="selections">
-          <select value={data.market_type} onChange={(e) => handleChange('market_type', e.target.value)}>
-            <option value="WIN">WIN</option>
-            <option value="PLACE">PLACE</option>
-             </select>
+            <select value={data.market_type} onChange={(e) => handleChange('market_type', e.target.value)}>
+              <option value="WIN">WIN</option>
+              <option value="PLACE">PLACE</option>
+            </select>
+          </div>
         </div>
-        </div>
-  
+
       </div>
 
 

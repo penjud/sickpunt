@@ -2,14 +2,63 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import PivotTableUI from 'react-pivottable/PivotTableUI';
 import 'react-pivottable/pivottable.css';
+import TableRenderers from 'react-pivottable/TableRenderers';
+import Plot from 'react-plotly.js';
+import createPlotlyRenderers from 'react-pivottable/PlotlyRenderers';
+import Cookies from 'js-cookie';
 import CircularProgress from '@mui/material/CircularProgress';
 import { API_URL } from '../helper/Constants';
 import './Table.css';
+
+const PlotlyRenderers = createPlotlyRenderers(Plot);
 
 const PivotTable = ({ endpoint }) => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pivotState, setPivotState] = useState({});
+
+  const cookieName = 'pivotState12'
+  const defaultPivotState = {
+    aggregatorName: "Sum",
+    cols: ['country','side'],
+    rows: ['strategy_name','bet_outcome'],
+    vals: ['profit'],
+    // Add other default values as needed
+  };
+
+  const extractStateToSave = (fullState) => {
+    const {
+      aggregatorName,
+      colOrder,
+      cols,
+      rendererName,
+      rowOrder,
+      rows,
+      vals,
+      // ... any other attributes you want to save
+    } = fullState;
+    return {
+      aggregatorName,
+      colOrder,
+      cols,
+      rendererName,
+      rowOrder,
+      rows,
+      vals,
+      // ...
+    };
+  };
+
+  useEffect(() => {
+    const savedState = Cookies.get(cookieName);
+    if (savedState) {
+      setPivotState(prevState => ({
+        ...defaultPivotState,
+        ...JSON.parse(savedState)
+      }));
+    }
+  }, []);
+
 
   useEffect(() => {
     axios
@@ -27,6 +76,13 @@ const PivotTable = ({ endpoint }) => {
       });
   }, []);
 
+  useEffect(() => {
+    if (Object.keys(pivotState).length !== 0) {
+      const stateToSave = extractStateToSave(pivotState);
+      Cookies.set(cookieName, JSON.stringify(stateToSave), { expires: 7 });
+    }
+  }, [pivotState]);
+
   return (
     <div className="pivot">
       {isLoading ? (
@@ -41,13 +97,12 @@ const PivotTable = ({ endpoint }) => {
           <CircularProgress />
         </div>
       ) : (
-        <div>
-          <PivotTableUI
-            data={orders}
-            onChange={(s) => setPivotState(s)}
-            {...pivotState}
-          />
-        </div>
+        <PivotTableUI
+        data={orders}
+        onChange={(s) => setPivotState(extractStateToSave(s))}
+        renderers={Object.assign({}, TableRenderers, PlotlyRenderers)}
+        {...{ ...defaultPivotState, ...pivotState }} // Merge with default state
+      />
       )}
     </div>
   );
