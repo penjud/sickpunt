@@ -19,6 +19,7 @@ interface IAttributesConfig {
   priceMaxValue: number;
   maxHorsesToBet: number;
   maxHorsesToBetStrategy: number;
+  harnessSelection: string;
 
   missingConditionsData: string;
   secsToStartSlider: number[];
@@ -31,6 +32,7 @@ const defaultAttributesConfig: IAttributesConfig = {
   selectedCountries: [],
   selectedSportType: "Horse Racing",
   betType: "",
+  harnessSelection: "Any",
   betSize: 1,
   priceStrategy: "last",
   priceMinValue: 1,
@@ -257,12 +259,16 @@ function Strategy() {
       </div>
 
       {/* Sport Type Selection */}
+      <label>Select Sport Type:</label>
       <div className="sport-type">
-        <label>Select Sport Type:</label>
         <select value={data.selectedSportType} onChange={(e) => handleChange('selectedSportType', e.target.value)}>
           <option value="">Select</option>
           <option value="Horse Racing">Horse Racing</option>
-          {/* ... add other sport types */}
+        </select>
+        <select value={data.harnessSelection} onChange={(e) => handleChange('harnessSelection', e.target.value)}>
+          <option value="Any">Any</option>
+          <option value="Harness only">Harness only</option>
+          <option value="Non harness only">Non-harness only</option>
         </select>
       </div>
 

@@ -103,3 +103,9 @@
   align-items: center;
   gap: 20px;
 }
+
+.sport-type {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}

@@ -53,6 +53,7 @@ class StrategyHandler:
                 price_max_value = strategy.get('priceMaxValue', 1000)
                 price_min_value = strategy.get('priceMinValue', 1.01)
                 strategy_market_type = strategy.get('marketType', 'WIN')
+                harness_selection = strategy.get('harnessSelection', 'any')
                 
 
                 for market_id, race_data in ff_copy.items():
@@ -84,6 +85,17 @@ class StrategyHandler:
                     market_name =  race_dict2[market_id]['marketName']
                     total_matched =  race_dict2[market_id]['totalMatched']
                     total_horses_num = len(race_dict2[market_id]['runners'])
+                    
+                    def is_harness(name):
+                        name = name.lower()
+                        return ('trot' in name.lower()) or ('pace' in name.lower())
+                    is_harness = is_harness(market_name)
+                    if harness_selection=='Harness only' and not is_harness:
+                        update_strategy_status(ff, market_id, strategy_name, comment=f'Market {market_name} is not harness')
+                        continue
+                    elif harness_selection=='Non harness only' and is_harness:
+                        update_strategy_status(ff, market_id, strategy_name, comment=f'Market {market_name} is harness')
+                        continue
                     
                     if not country in strategy_countries:
                         update_strategy_status(
@@ -119,7 +131,6 @@ class StrategyHandler:
                         order_found = False
                         condition_met = True
                         horse_info_dict = horse['_horse_info'] if horse['_horse_info'] else {}
-                    
                         horse_info_dict['Horses per race'] = total_horses_num
                         horse_info_dict['Last Traded price'] = horse['last']
                         horse_info_dict['Current lay price'] = horse['lay']
@@ -200,6 +211,7 @@ class StrategyHandler:
                                     'venue': venue,
                                     'market_name': market_name,
                                     'market_type': strategy_market_type,
+                                    'harnesstype': is_harness,
                                     'country': country,
                                     'total_matched': total_matched,
                                     'market_id': market_id,
