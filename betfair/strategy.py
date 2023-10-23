@@ -211,7 +211,7 @@ class StrategyHandler:
                                     'venue': venue,
                                     'market_name': market_name,
                                     'market_type': strategy_market_type,
-                                    'harnesstype': is_harness,
+                                    'is_harness': is_harness,
                                     'country': country,
                                     'total_matched': total_matched,
                                     'market_id': market_id,
