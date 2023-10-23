@@ -20,8 +20,8 @@ const PivotTable = ({ endpoint }) => {
   const cookieName = 'pivotState12'
   const defaultPivotState = {
     aggregatorName: "Sum",
-    cols: ['country','side'],
-    rows: ['strategy_name','bet_outcome'],
+    cols: ['country','side','bet_outcome'],
+    rows: ['strategy_name'],
     vals: ['profit'],
     // Add other default values as needed
   };
