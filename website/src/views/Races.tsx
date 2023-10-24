@@ -17,20 +17,40 @@ const RaceStreamer: React.FC = () => {
 
   let retryCount = 0;
 
+  const stableSort = (arr) => {
+    // Create an array of indices [0, 1, 2, ...]
+    const indices = Array.from({ length: arr.length }, (_, i) => i);
+
+    // Sort the indices array
+    indices.sort((a, b) => {
+        const diff = Math.abs(arr[a].secondsToStart - arr[b].secondsToStart);
+        // Only sort if the difference is 30 or more
+        if (diff >= 30) {
+            return arr[a].secondsToStart - arr[b].secondsToStart;
+        }
+        // If the difference is less than 30, retain the original order
+        return a - b;
+    });
+
+    // Create a new array in the sorted order
+    return indices.map(index => arr[index]);
+};
+  
+
   useEffect(() => {
     const intervalId = setInterval(() => {
       setLastSortedTime(Date.now());
-    }, 5000);
+    }, 2000);
 
     return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
     if (Date.now() - lastSortedTime >= 6000) {
-      const sortedData = [...raceData].sort((a, b) => a.secondsToStart - b.secondsToStart);
-      setRaceData(sortedData);
+        const sortedData = stableSort([...raceData]);
+        setRaceData(sortedData);
     }
-  }, [lastSortedTime, raceData]);
+}, [lastSortedTime, raceData]);
 
 
   const connectSocket = () => {
@@ -80,16 +100,16 @@ const RaceStreamer: React.FC = () => {
       setLastSortedTime((prevLastSortedTime) => {
         const now = Date.now();
         if (now - lastSortedTime >= 2000) {
-          const mergedData = [...raceData, ...formattedData];
-          const sortedData = mergedData.sort((a, b) => a.secondsToStart - b.secondsToStart);
-          setRaceData(sortedData);
-          setLastSortedTime(now);  // Update the last sorted time
+            const mergedData = [...raceData, ...formattedData];
+            const sortedData = stableSort(mergedData);
+            setRaceData(sortedData);
+            setLastSortedTime(now);  // Update the last sorted time
         } else {
-          const mergedData = [...raceData, ...formattedData];
-          setRaceData(mergedData);
+            const mergedData = [...raceData, ...formattedData];
+            setRaceData(mergedData);
         }
         return prevLastSortedTime; // keep the lastSortedTime unchanged
-      });
+    });
 
 
     };
