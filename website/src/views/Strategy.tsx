@@ -264,6 +264,7 @@ function Strategy() {
         <select value={data.selectedSportType} onChange={(e) => handleChange('selectedSportType', e.target.value)}>
           <option value="">Select</option>
           <option value="Horse Racing">Horse Racing</option>
+          <option value="Greyhound Racing">Greyhound Racing</option>
         </select>
         <select value={data.harnessSelection} onChange={(e) => handleChange('harnessSelection', e.target.value)}>
           <option value="Any">Any</option>

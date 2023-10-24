@@ -38,9 +38,11 @@ class StrategyHandler:
         async with lock:
             ff_copy = copy.copy(ff)
             strategies_copy = copy.copy(strategies)
+
         users = ['default']
-        for user in users:    
+        for user in users:                
             for _, strategy in strategies_copy.items():
+                user = strategy.get('user', 'default')
                 strategy_name = strategy.get('StrategyName', 'Unknown')
                 bet_size = strategy.get('betSize', 0)
                 bet_type = strategy.get('betType', 'Lay').upper()
@@ -52,9 +54,9 @@ class StrategyHandler:
                 active = strategy.get('active', 'off')
                 price_max_value = strategy.get('priceMaxValue', 1000)
                 price_min_value = strategy.get('priceMinValue', 1.01)
-                strategy_market_type = strategy.get('market_type', 'WIN')
+                strategy_market_type = strategy.get('marketType', 'WIN')
                 harness_selection = strategy.get('harnessSelection', 'any')
-                
+                strategy_event_type = strategy.get('selectedSportType', 'Horse Racing').lower()
 
                 for market_id, race_data in ff_copy.items():
                     update_strategy_status(
@@ -79,13 +81,18 @@ class StrategyHandler:
                     if not race_data2['_seconds_to_start']:
                         continue  # data not yet available
 
-                    country = race_dict2[market_id]['event']['countryCode']
-                    strategy_countries = strategy['selectedCountries']
-                    venue =  race_dict2[market_id]['event']['venue']
-                    market_name =  race_dict2[market_id]['marketName']
-                    total_matched =  race_dict2[market_id]['totalMatched']
-                    total_horses_num = len(race_dict2[market_id]['runners'])
-                    
+                country = race_dict2[market_id]['event']['countryCode']
+                strategy_countries = strategy['selectedCountries']
+                venue =  race_dict2[market_id]['event']['venue']
+                market_name =  race_dict2[market_id]['marketName']
+                total_matched =  race_dict2[market_id]['totalMatched']
+                total_horses_num = len(race_dict2[market_id]['runners'])
+                event_type = race_dict2[market_id]['event_type']['name'].lower()
+                
+                if event_type!=strategy_event_type:
+                    update_strategy_status(ff, market_id, strategy_name, comment=f'Strategy only for {strategy_event_type}.')
+                    continue
+                                
                     def is_harness(name):
                         name = name.lower()
                         return ('trot' in name.lower()) or ('pace' in name.lower())
@@ -208,9 +215,9 @@ class StrategyHandler:
                                                                                     side=bet_type, persistence_type=persistent_type)
 
                             order = {'strategy_name': strategy_name,
-                                    'venue': venue,
-                                    'market_name': market_name,
-                                    'market_type': strategy_market_type,
+                                    'event_type': event_type,
+                                'venue': venue,
+                                        'market_type': strategy_market_type,
                                     'is_harness': is_harness,
                                     'country': country,
                                     'total_matched': total_matched,
