@@ -62,7 +62,7 @@ async def orders():
         df = df.drop(['handicap','price_reduced','selection_id_y','customer_order_ref',
                       'customer_strategy_ref','persistence_type_x','market_id_y', 'persistence_type_y',
                       'market_id_y','side_y','selection_id_x','oder_type','size-cancelled','item_description','event_type_id',
-                      'comission','average_price_matched', 'bet_count',
+                      'comission','average_price_matched', 'bet_count','settled_date','market_id_x',
                       'bet_id','commission','event_id','size_cancelled', 'placed_date','last_matched_date','price_requested','total_matched',
                       'user','event_id'], axis=1, errors='ignore')
         df = df.fillna(0)
