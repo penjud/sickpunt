@@ -73,7 +73,7 @@ export const RaceChart: React.FC<RaceProps> = ({ raceId, raceTitle, horseData, o
     
     return (
         <div>
-            <div className="raceTitle">Race {raceId} {raceTitle}</div>
+            <div className="raceTitle">{raceTitle}</div>
             <OverrunComponent overrunBack={overrunBack} overrunLay={overrunLay} overrunLast={overrunLast} />
             <StrategyStatusComponent strategyStatus={strategyStatus} />
             <p>

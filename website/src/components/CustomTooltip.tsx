@@ -21,10 +21,12 @@ export const CustomTooltip = ({ active, payload, label }) => {
           <div>{`Last Max: ${(1 / selectedData._last_max)?.toFixed(2)}`}</div>
           <div>{`${Object.keys(selectedData._strategy_status).length === 0 ? ""
             : `Strategy Status: ${selectedData._strategy_status}`}`}</div>
+          <div>{`Punters data available: ${selectedData._horse_info && Object.keys(selectedData._horse_info).length >= 20 ? 'Yes' : 'No'}`}</div>
+
         </div>
 
         <div className="table-section">
-          {selectedData._horse_info && (
+          {/* {selectedData._horse_info && (
             chunks.map((chunk, index) => (
               <table key={index} className="tooltip-table">
                 {chunk.map(([key, value]) => (
@@ -35,7 +37,9 @@ export const CustomTooltip = ({ active, payload, label }) => {
                 ))}
               </table>
             ))
-          )}
+          )} */}
+          {/* alternative presentation: only show if horse_info is available, yes or no */}
+
         </div>
       </div>
     );
