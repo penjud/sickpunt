@@ -7,8 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_jwt_auth import AuthJWT
-# from fastapi_jwt_auth.exceptions import AuthJWTException
-from flask_jwt_extended import jwt_required
+from fastapi_jwt_auth.exceptions import AuthJWTException
 from pydantic import BaseModel, Field
 
 from betfair.config import admin_collection
