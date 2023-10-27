@@ -72,11 +72,6 @@ class StrategyHandler:
                         update_strategy_status(
                             ff, market_id, strategy_name, comment=f'Already bet on {max_horses_to_bet} horses.')
                         continue
-
-                    if strategy_market_type!=race_market_type:
-                        
-                        update_strategy_status(ff, market_id, strategy_name, comment=f'Strategy only for {strategy_market_type}.')
-                        continue
                     
                     if not race_data2['_seconds_to_start']:
                         continue  # data not yet available
@@ -91,6 +86,10 @@ class StrategyHandler:
                     
                     if event_type!=strategy_event_type:
                         update_strategy_status(ff, market_id, strategy_name, comment=f'Strategy only for {strategy_event_type}.')
+                        continue
+                    
+                    if strategy_market_type!=race_market_type:
+                        update_strategy_status(ff, market_id, strategy_name, comment=f'Strategy only for {strategy_market_type}.')
                         continue
                                     
                     def is_harness(name):
