@@ -292,14 +292,28 @@ async def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, st
         await asyncio.sleep(.01)
 
 
+import asyncio
+
 async def load_strategies(strategies):
     while True:
         loaded_strategies = strategy_collection.find(
             {"active": {"$in": ["dummy", "on"]}}, {"_id": 0}
         )
+        
+        # Populate the strategies dictionary with loaded strategies
+        loaded_strategy_names = set()
         for strategy in loaded_strategies:
-            strategies[strategy["StrategyName"]] = strategy
-        await asyncio.sleep(10)
+            strategy_name = strategy["StrategyName"]
+            strategies[strategy_name] = strategy
+            loaded_strategy_names.add(strategy_name)
+        
+        # Remove strategies not present in loaded_strategies
+        strategy_names_to_remove = [name for name in strategies.keys() if name not in loaded_strategy_names]
+        for name_to_remove in strategy_names_to_remove:
+            del strategies[name_to_remove]
+        
+        await asyncio.sleep(15)
+
 
 
 async def update_remaining_time(ff_cache):
