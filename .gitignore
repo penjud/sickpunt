@@ -304,3 +304,6 @@ default.log.*
 *.9
 betfair.pem
 default*.*
+
+*code-workspace
+package-lock.json
