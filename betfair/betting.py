@@ -28,6 +28,7 @@ def price_adjustment(price):
 
 def place_order(market_id, selection_id, size, price, side='LAY', persistence_type='LAPSE'):
     # placing an order
+    price=float(price)
     limit_order = filters.limit_order(
         size=size, price=price, persistence_type=persistence_type)
     instruction = filters.place_instruction(
