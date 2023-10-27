@@ -40,7 +40,7 @@ class HorseRaceListener(StreamListener):
             # print (len(self.race_ids))
             if market_id in self.race_ids:
                 race_start_time = self.race_dict[market_id]['start_time']
-                market_name = self.race_dict[market_id]['marketName'] +' (' +self.race_dict[market_id]['market_type']+')'
+                market_name = self.race_dict[market_id]['fullTitle'] +' (' +self.race_dict[market_id]['market_type']+')'
                 secs_to_start = (race_start_time -
                                  datetime.utcnow().replace(tzinfo=pytz.utc)).total_seconds()
                 for runner_change in market_change.get('rc', []):
