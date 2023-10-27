@@ -68,7 +68,8 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
                     race_data['marketStartTime']).replace(tzinfo=pytz.utc),
                     'runners': race_data['runners'],
                     'event': race_data['event'],
-                    'marketName': race_data['eventType']['name'] +' '+ race_data['marketName'] + ' ' + race_data['event']['name']+ ' ' + race_data['event']['countryCode'],
+                    'fullTitle': race_data['eventType']['name'] +' '+ race_data['marketName'] + ' ' + race_data['event']['name']+ ' ' + race_data['event']['countryCode'],
+                    'marketName': race_data['marketName'],
                     'market_type': market_type,
                     'event_type': race_data['eventType'],
                     'totalMatched': race_data['totalMatched']}

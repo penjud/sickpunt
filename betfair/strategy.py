@@ -80,6 +80,7 @@ class StrategyHandler:
                     strategy_countries = strategy['selectedCountries']
                     venue =  race_dict2[market_id]['event']['venue']
                     market_name =  race_dict2[market_id]['marketName']
+                    full_title =  race_dict2[market_id]['fullTitle']
                     total_matched =  race_dict2[market_id]['totalMatched']
                     total_horses_num = len(race_dict2[market_id]['runners'])
                     event_type = race_dict2[market_id]['event_type']['name'].lower()
@@ -95,12 +96,12 @@ class StrategyHandler:
                     def is_harness(name):
                         name = name.lower()
                         return ('trot' in name.lower()) or ('pace' in name.lower())
-                    is_harness = is_harness(market_name)
+                    is_harness = is_harness(full_title)
                     if harness_selection=='Harness only' and not is_harness:
-                        update_strategy_status(ff, market_id, strategy_name, comment=f'Market {market_name} is not harness')
+                        update_strategy_status(ff, market_id, strategy_name, comment=f'Market {full_title} is not harness')
                         continue
                     elif harness_selection=='Non harness only' and is_harness:
-                        update_strategy_status(ff, market_id, strategy_name, comment=f'Market {market_name} is harness')
+                        update_strategy_status(ff, market_id, strategy_name, comment=f'Market {full_title} is harness')
                         continue
                     
                     if not country in strategy_countries:
@@ -235,6 +236,7 @@ class StrategyHandler:
                                     'status': status,
                                     'bet_id': bet_id,
                                     'average_price_matched': average_price_matched,
+                                    'market_name': market_name,
                                     'user': user
                                     }
                             log.info(f"Placed order: {order}")
