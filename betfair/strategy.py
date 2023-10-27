@@ -81,18 +81,18 @@ class StrategyHandler:
                     if not race_data2['_seconds_to_start']:
                         continue  # data not yet available
 
-                country = race_dict2[market_id]['event']['countryCode']
-                strategy_countries = strategy['selectedCountries']
-                venue =  race_dict2[market_id]['event']['venue']
-                market_name =  race_dict2[market_id]['marketName']
-                total_matched =  race_dict2[market_id]['totalMatched']
-                total_horses_num = len(race_dict2[market_id]['runners'])
-                event_type = race_dict2[market_id]['event_type']['name'].lower()
-                
-                if event_type!=strategy_event_type:
-                    update_strategy_status(ff, market_id, strategy_name, comment=f'Strategy only for {strategy_event_type}.')
-                    continue
-                                
+                    country = race_dict2[market_id]['event']['countryCode']
+                    strategy_countries = strategy['selectedCountries']
+                    venue =  race_dict2[market_id]['event']['venue']
+                    market_name =  race_dict2[market_id]['marketName']
+                    total_matched =  race_dict2[market_id]['totalMatched']
+                    total_horses_num = len(race_dict2[market_id]['runners'])
+                    event_type = race_dict2[market_id]['event_type']['name'].lower()
+                    
+                    if event_type!=strategy_event_type:
+                        update_strategy_status(ff, market_id, strategy_name, comment=f'Strategy only for {strategy_event_type}.')
+                        continue
+                                    
                     def is_harness(name):
                         name = name.lower()
                         return ('trot' in name.lower()) or ('pace' in name.lower())
@@ -216,8 +216,8 @@ class StrategyHandler:
 
                             order = {'strategy_name': strategy_name,
                                     'event_type': event_type,
-                                'venue': venue,
-                                        'market_type': strategy_market_type,
+                                    'venue': venue,
+                                    'market_type': strategy_market_type,
                                     'is_harness': is_harness,
                                     'country': country,
                                     'total_matched': total_matched,
