@@ -26,7 +26,11 @@ from tenacity import retry, wait_exponential
 
 from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,
                             STREAM_RESTART_MINUTES, admin_collection, client,
-                            orders_collection, strategy_collection)
+                            orders_collection, strategy_collection, winner_collection)
+
+from betfair.mongo_manager import (get_strategies_for_play,
+                                   update_estimated_profit, get_data_for_hypothetical_payoff)
+
 from betfair.helper import init_logger
 from betfair.metadata import get_current_event_metadata
 from betfair.strategy import StrategyHandler
@@ -41,38 +45,48 @@ race_data_available = asyncio.Event()
 betfair_socket = None
 log = logging.getLogger(__name__)
 
+
 @app.post("/orders")
 async def orders():
-    
-        bot_orders_json = list(orders_collection.find({}, {'_id': False}))
 
-        # Use the list_current_orders method to retrieve information about your orders
-        response = client.betting.list_cleared_orders()
-        orders = response.orders
-        # Convert orders to a format suitable for JSON serialization
-        elements = [x for x in dir(orders[0]) if x[0]!='_' and x!='get']
-        betfair_orders_json = [{element: getattr(order, element) for element in elements} for order in orders]
+    bot_orders_json = list(orders_collection.find({}, {'_id': False}))
 
-        betfair_df = pd.DataFrame(betfair_orders_json)
-        bot_df = pd.DataFrame(bot_orders_json)
-        bot_df['bet_id'] = bot_df['bet_id'].astype(str)
-        betfair_df['bet_id'] = betfair_df['bet_id'].astype(str)
-        
-        df = pd.merge(betfair_df, bot_df, on=['bet_id'], how='outer')
-        df = df.drop(['handicap','price_reduced','selection_id_y','customer_order_ref',
-                      'customer_strategy_ref','persistence_type_x','market_id_y', 'persistence_type_y',
-                      'market_id_y','side_y','selection_id_x','oder_type','size-cancelled','item_description','event_type_id',
-                      'comission','average_price_matched', 'bet_count','settled_date','market_id_x',
-                      'bet_id','commission','event_id','size_cancelled', 'placed_date','last_matched_date','price_requested','total_matched',
-                      'user','event_id'], axis=1, errors='ignore')
-        df = df.fillna(0)
-        floats = ['profit','last_back','last_lay','last_traded','price','price_matched','size']
-        
-        for fl in floats:
+    # Use the list_current_orders method to retrieve information about your orders
+    response = client.betting.list_cleared_orders()
+    orders = response.orders
+    # Convert orders to a format suitable for JSON serialization
+    elements = [x for x in dir(orders[0]) if x[0] != '_' and x != 'get']
+    betfair_orders_json = [
+        {element: getattr(order, element) for element in elements} for order in orders]
+
+    betfair_df = pd.DataFrame(betfair_orders_json)
+    bot_df = pd.DataFrame(bot_orders_json)
+    bot_df['bet_id'] = bot_df['bet_id'].astype(str)
+    betfair_df['bet_id'] = betfair_df['bet_id'].astype(str)
+
+    df = pd.merge(betfair_df, bot_df, on=['bet_id'], how='outer')
+    df = df.drop(['handicap', 'price_reduced', 'selection_id_y', 'customer_order_ref',
+                  'customer_strategy_ref', 'persistence_type_x', 'market_id_y', 'persistence_type_y',
+                  'market_id_y', 'side_y', 'selection_id_x', 'oder_type', 'size-cancelled', 'item_description', 'event_type_id',
+                  'comission', 'average_price_matched', 'bet_count', 'settled_date', 'market_id_x',
+                  'bet_id', 'commission', 'event_id', 'size_cancelled', 'placed_date', 'last_matched_date', 'price_requested', 'total_matched',
+                  'user', 'event_id',
+                  'order_type', 'size_settled', 'last_traded', 'price', 'last_lay', 'last_back', 'seconds_to_start', 'size'
+
+
+                  ], axis=1, errors='ignore')
+    df = df.fillna(0)
+    floats = ['profit', 'last_back', 'last_lay',
+              'last_traded', 'price', 'price_matched', 'size']
+
+    for fl in floats:
+        try:
             df[fl] = df[fl].astype(float)
-        
-    
-        return json.loads(df.to_json(orient='records'))
+        except Exception as e:
+            pass
+
+    return json.loads(df.to_json(orient='records'))
+
 
 @app.post("/balance")
 async def balance():
@@ -116,6 +130,7 @@ async def load_strategy(strategy_name: str):
         return strategy_data
     else:
         raise HTTPException(status_code=404, detail="Strategy not found")
+
 
 @app.post("/delete_strategy")
 async def delete_strategy(strategy_name: str):
@@ -243,6 +258,7 @@ class StreamWithReconnect:
             # Add logic here to stop the stream. This depends on how your streaming client is implemented.
             self.stream.stop()
 
+
 async def connect_to_stream(stream_with_reconnect):
     # log.info(f"Current race_ids: {race_ids}")  # Add debug log
     market_filter = streaming_market_filter(
@@ -264,23 +280,23 @@ async def schedule_stream_restart(interval_minutes=STREAM_RESTART_MINUTES):
         punters_com_au, horse_info_dict, runnerid_name_dict
     )
     stream_with_reconnect = StreamWithReconnect(client, listener, None, None)
-    
+
     while True:
         log.info("Starting new streaming session")
-        stream_task = asyncio.create_task(connect_to_stream(stream_with_reconnect))
-        await asyncio.sleep(interval_minutes * 60)  # Convert minutes to seconds
+        stream_task = asyncio.create_task(
+            connect_to_stream(stream_with_reconnect))
+        # Convert minutes to seconds
+        await asyncio.sleep(interval_minutes * 60)
         log.info("Stopping current streaming session")
-        
+
         # Stop the old stream
         stream_with_reconnect.stop()
-        
+
         stream_task.cancel()
         try:
             await stream_task
         except asyncio.CancelledError:
             pass
-
-
 
 
 async def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, strategies):
@@ -292,28 +308,75 @@ async def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, st
         await asyncio.sleep(.01)
 
 
-import asyncio
-
 async def load_strategies(strategies):
     while True:
-        loaded_strategies = strategy_collection.find(
-            {"active": {"$in": ["dummy", "on"]}}, {"_id": 0}
-        )
-        
+        loaded_strategies = await get_strategies_for_play()
+
         # Populate the strategies dictionary with loaded strategies
         loaded_strategy_names = set()
         for strategy in loaded_strategies:
             strategy_name = strategy["StrategyName"]
             strategies[strategy_name] = strategy
             loaded_strategy_names.add(strategy_name)
-        
+
         # Remove strategies not present in loaded_strategies
-        strategy_names_to_remove = [name for name in strategies.keys() if name not in loaded_strategy_names]
+        strategy_names_to_remove = [
+            name for name in strategies.keys() if name not in loaded_strategy_names]
         for name_to_remove in strategy_names_to_remove:
             del strategies[name_to_remove]
-        
+
+        for race_id in list(ff_cache.keys()):
+            if race_id not in race_ids:
+                # make winner
+                df = pd.DataFrame(ff_cache[race_id]).T
+                df = df.loc[~df.index.str.startswith('_')]
+                df = df[df['last'] >= 1]
+                df = df.sort_values('last', ascending=True)
+                try:
+                    winner = df.head(1).index[0]
+                    # save winner and race_id to mongodb, insert entry to winner
+                    winner_collection.insert_one(
+                        {'market_id': race_id, 'winner': winner, 'timestamp': datetime.utcnow()})
+                except IndexError:
+                    log.warning("No winner found")
+
         await asyncio.sleep(15)
 
+
+async def hypothetical_payoff_calc():
+    """add payoffs to each bet that has been placed"""
+    while True:
+        winners_df, orders_list = await get_data_for_hypothetical_payoff()
+
+        # calculate hypothetical payoffs, depending on oder type lay or back and whether the horse won or not
+        for order in orders_list:
+            try:
+                winner = winners_df[winners_df['market_id']
+                                    == order['market_id']]['winner'].values[0]
+            except (IndexError, KeyError):
+                continue   # nothing in the database
+            if order['selection_id'] == winner:
+                if order['side'] == 'BACK':
+                    order['profit_estimate'] = order['size'] * \
+                        order['price'] - 1
+                    order['outcome_estimate'] = 'WON'
+                elif order['side'] == 'LAY':
+                    order['profit_estimate'] = - \
+                        order['size'] * order['price'] + 1
+                    order['outcome_estimate'] = 'LOST'
+            else:  # loser
+                if order['side'] == 'BACK':
+                    order['profit_estimate'] = -order['size']
+                    order['outcome_estimate'] = 'LOST'
+                elif order['side'] == 'LAY':
+                    order['profit_estimate'] = order['size']
+                    order['outcome_estimate'] = 'WON'
+
+            # save hypothetical payoffs to mongodb
+            log.info(f'processing...{order}')
+            await update_estimated_profit(order)
+
+        await asyncio.sleep(234)
 
 
 async def update_remaining_time(ff_cache):
@@ -345,6 +408,7 @@ async def startup_event():
                          race_dict, runnerid_name_dict, strategies))
         loop.create_task(update_remaining_time(ff_cache))
         loop.create_task(schedule_stream_restart())
+        loop.create_task(hypothetical_payoff_calc())
     except Exception as e:
         log.critical(f"Error during startup: {e}")
 

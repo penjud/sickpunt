@@ -27,6 +27,7 @@ tickdata_collection = mongo_db["tickdata"]
 orders_collection = mongo_db["orders"]
 strategy_collection = mongo_db["strategies"]
 admin_collection = mongo_db["user_admin"]
+winner_collection = mongo_db["winner"]
 
 admin_data = list(admin_collection.find(
     {"Email": USERNAME}, {'_id': False}))[0]

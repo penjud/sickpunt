@@ -11,6 +11,7 @@ import pytz
 
 from betfair.betting import place_order, price_adjustment
 from betfair.config import is_prod_computer, orders_collection
+from betfair.mongo_manager import insert_order
 
 log = logging.getLogger(__name__)
 lock = asyncio.Lock()
@@ -208,8 +209,8 @@ class StrategyHandler:
                                     float(price_max_value))
                             price = price_adjustment(price)
                             status, bet_id, average_price_matched = 'dummy', 'dummy', 'dummy'
-                            if active == 'on': # and is_prod_computer():
-                                log.info(
+                            if active == 'on' and is_prod_computer():
+                                log.debug(
                                     {f"Sending to betfair: {strategy_name} {bet_type} {bet_size} {price} {selection_id} {market_id}"})
                                 status, bet_id, average_price_matched = place_order(market_id, selection_id, bet_size, price,
                                                                                     side=bet_type, persistence_type=persistent_type)
@@ -239,12 +240,12 @@ class StrategyHandler:
                                     'market_name': market_name,
                                     'user': user
                                     }
-                            log.info(f"Placed order: {order}")
+                            log.debug(f"Placed order: {order}")
                             if isinstance(ff[market_id]['_orders'], list):
                                 ff[market_id]['_orders'].append(order)
                             else:
                                 ff[market_id]['_orders'] = [order]
-                            orders_collection.insert_one(copy.copy(order))
+                            await insert_order(copy.copy(order))
 
     async def check_modify(self, last, ff, race_dict, runnerid_name_dict, strategies):
         pass
