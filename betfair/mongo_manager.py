@@ -22,7 +22,6 @@ winner_collection = mongo_db["winner"]
 async def update_estimated_profit(order):
     await orders_collection.update_one({'timestamp': order['timestamp'],
                                 'market_id': order['market_id'],
-                                'user': order['user'],
                                 'selection_id': order['selection_id'],
                                 'strategy_name': order['strategy_name']},
                                 {'$set': {'profit_estimate': order['profit_estimate'],
