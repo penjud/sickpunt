@@ -323,7 +323,10 @@ async def load_strategies(strategies):
         for race_id in list(ff_cache.keys()):
             if race_id not in race_ids:
                 # make winner
-                df = pd.DataFrame(ff_cache[race_id]).T
+                extract = copy.copy(ff_cache[race_id])
+                if '_orders' in extract:
+                    del extract['_orders']
+                df = pd.DataFrame(extract).T
                 df = df.loc[~df.index.str.startswith('_')]
                 df = df[df['last'] >= 1]
                 df = df.sort_values('last', ascending=True)
