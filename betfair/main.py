@@ -201,11 +201,6 @@ async def last_prices(websocket: WebSocket):
             else:
                 return data
 
-        for key in list(ff_cache.keys()):
-            if key not in race_ids:
-                log.info(f"Deleting {key} from ff_cache")
-                del ff_cache[key]
-
         # Before sending the data
         converted_ff_cache = convert_deque(ff_cache)
 
@@ -339,6 +334,8 @@ async def load_strategies(strategies):
                         {'market_id': race_id, 'winner': winner, 'timestamp': datetime.utcnow()})
                 except IndexError:
                     log.warning("No winner found")
+                
+                del ff_cache[race_id]
 
         await asyncio.sleep(15)
 
