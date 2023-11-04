@@ -322,21 +322,12 @@ async def load_strategies(strategies):
 
         for race_id in list(ff_cache.keys()):
             if race_id not in race_ids:
-                # make winner
-                extract = copy.copy(ff_cache[race_id])
-                if '_orders' in extract:
-                    del extract['_orders']
-                df = pd.DataFrame(extract).T
-                df = df.loc[~df.index.str.startswith('_')]
-                df = df[df['last'] >= 1]
-                df = df.sort_values('last', ascending=True)
-                try:
-                    winner = df.head(1).index[0]
-                    # save winner and race_id to mongodb, insert entry to winner
-                    winner_collection.insert_one(
-                        {'market_id': race_id, 'winner': winner, 'timestamp': datetime.utcnow()})
-                except IndexError:
+                winner = get_winner(race_id)
+                if not winner:
                     log.warning("No winner found")
+                    continue
+                winner_collection.insert_one(
+                    {'market_id': race_id, 'winner': winner, 'timestamp': datetime.utcnow()})
                 
                 del ff_cache[race_id]
 
@@ -351,11 +342,11 @@ async def hypothetical_payoff_calc():
         # calculate hypothetical payoffs, depending on oder type lay or back and whether the horse won or not
         for order in orders_list:
             try:
-                winner = winners_df[winners_df['market_id']
+                winners = winners_df[winners_df['market_id']
                                     == order['market_id']]['winner'].values[0]
             except (IndexError, KeyError):
                 continue   # nothing in the database
-            if order['selection_id'] == winner:
+            if order['selection_id'] in winners:
                 if order['side'] == 'BACK':
                     order['profit_estimate'] = order['size'] * \
                         order['price'] - 1
@@ -373,10 +364,22 @@ async def hypothetical_payoff_calc():
                     order['outcome_estimate'] = 'WON'
 
             # save hypothetical payoffs to mongodb
-            log.info(f'processing...{order}')
             await update_estimated_profit(order)
 
         await asyncio.sleep(234)
+
+
+def get_winner(market_id):
+    """use betfairleightweight to get the winner of a market"""
+    market_book = client.betting.list_market_book(
+        market_ids=[market_id], price_projection={"priceData": ["EX_BEST_OFFERS"]}
+    )
+    if market_book[0]['status'] == 'OPEN':
+        pass # market is still open
+    elif market_book[0]['status'] == 'CLOSED':
+        winners = [runner.selection_id for runner in market_book[0]['runners'] if runner['status'] == 'WINNER']
+        log.info(f"The winning selection is:  {winners}")
+        return winners
 
 
 async def update_remaining_time(ff_cache):
