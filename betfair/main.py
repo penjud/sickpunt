@@ -348,7 +348,6 @@ async def hypothetical_payoff_calc():
                 log.warning("No winner found")
                 continue
             log.debug(f'Winner: {winner}')
-            await asyncio.sleep(.1)
             await insert_winner({'market_id': race_id, 'winner': winner, 'timestamp': datetime.utcnow()})
         
         # calculate hypothetical payoff
@@ -363,7 +362,7 @@ async def hypothetical_payoff_calc():
             except (IndexError, KeyError):
                 log.debug(f"No winner found for {order['market_id']}")
                 continue   # nothing in the database
-            if order['selection_id'] in winners:
+            if int(order['selection_id']) in winners:
                 if order['side'] == 'BACK':
                     order['profit_estimate'] = order['size'] * \
                         order['price'] - 1
