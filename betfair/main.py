@@ -391,6 +391,9 @@ def get_winner(market_id):
     market_book = client.betting.list_market_book(
         market_ids=[market_id], price_projection={"priceData": ["EX_BEST_OFFERS"]}
     )
+    if not market_book:
+        log.warning(f"Market book not found for {market_id}")
+        return
     if market_book[0]['status'] == 'OPEN':
         pass # market is still open
     elif market_book[0]['status'] == 'CLOSED':
