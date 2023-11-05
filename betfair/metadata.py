@@ -32,7 +32,7 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
         # Define the filter for the races
 
         for market_type in MARKET_TYPES:
-
+            log.debug(f'Getting metadata for {market_type}')
             market_filter = {
                 'eventTypeIds': EVENT_TYPE_IDS,  # Horse Racing event type ID
                 'marketStartTime': {
@@ -52,7 +52,7 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
                 market_projection=[
                     'EVENT', 'EVENT_TYPE', 'COMPETITION', 'RUNNER_DESCRIPTION', 'MARKET_START_TIME', 'RUNNER_METADATA']
             )
-
+            log.debug(f'Got Metadata: {len(races)}')
             # Update the shared dict of market data
 
             for race in races:
@@ -80,7 +80,7 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
             race_ids.intersection_update(current_races)
 
             # print(race_datas)
-            upsert_event_metadata(race_datas)
+            # upsert_event_metadata(race_datas)
 
             # load all market_ids from punters_com_au_collection
             horse_names = []
@@ -96,5 +96,5 @@ async def get_current_event_metadata(race_ids, race_dict, race_data_available, h
                 {"Horse Name": {"$in": horse_names}}, {'_id': 0}))
             for horse in horse_infos:
                 horse_info_dict[horse['Horse Name']] = horse
-
+        log.debug ("Finished metadata loading")
         await asyncio.sleep(SECS_MARKET_FETCH_INTERVAL)

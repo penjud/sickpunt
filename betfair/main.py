@@ -28,7 +28,7 @@ from betfair.config import (COUNTRIES, EVENT_TYPE_IDS, MARKET_TYPES,
                             STREAM_RESTART_MINUTES, admin_collection, client,
                             orders_collection, strategy_collection, winner_collection)
 
-from betfair.mongo_manager import (get_strategies_for_play,
+from betfair.mongo_manager import (get_orders_without_estimated_winner, get_strategies_for_play, insert_winner,
                                    update_estimated_profit, get_data_for_hypothetical_payoff)
 
 from betfair.helper import init_logger
@@ -65,10 +65,10 @@ async def orders():
     betfair_df['bet_id'] = betfair_df['bet_id'].astype(str)
 
     df = pd.merge(betfair_df, bot_df, on=['bet_id'], how='outer')
-    df = df.drop(['handicap', 'price_reduced', 'selection_id_y', 'customer_order_ref',
-                  'customer_strategy_ref', 'persistence_type_x', 'market_id_y', 'persistence_type_y',
-                  'market_id_y', 'side_y', 'selection_id_x', 'oder_type', 'size-cancelled', 'item_description', 'event_type_id',
-                  'comission', 'average_price_matched', 'bet_count', 'settled_date', 'market_id_x',
+    df = df.drop(['handicap', 'price_reduced',  'customer_order_ref',
+                  'customer_strategy_ref', 'persistence_type_x', 'persistence_type_y',
+                   'side_y', 'oder_type', 'size-cancelled', 'item_description', 'event_type_id',
+                  'comission', 'average_price_matched', 'bet_count', 'settled_date', 
                   'bet_id', 'commission', 'event_id', 'size_cancelled', 'placed_date', 'last_matched_date', 'price_requested', 'total_matched',
                   'user', 'event_id',
                   'order_type', 'size_settled', 'last_traded', 'price', 'last_lay', 'last_back', 'seconds_to_start', 'size'
@@ -305,7 +305,9 @@ async def check_strategy(last_cache, ff_cache, race_dict, runnerid_name_dict, st
 
 async def load_strategies(strategies):
     while True:
+        log.debug('Loading strategies')
         loaded_strategies = await get_strategies_for_play()
+        log.debug('Done')
 
         # Populate the strategies dictionary with loaded strategies
         loaded_strategy_names = set()
@@ -324,7 +326,7 @@ async def load_strategies(strategies):
             if race_id not in race_ids:
                 winner = get_winner(race_id)
                 if not winner:
-                    log.warning("No winner found")
+                    log.debug("No winner found")
                     continue
                 winner_collection.insert_one(
                     {'market_id': race_id, 'winner': winner, 'timestamp': datetime.utcnow()})
@@ -337,14 +339,29 @@ async def load_strategies(strategies):
 async def hypothetical_payoff_calc():
     """add payoffs to each bet that has been placed"""
     while True:
+        
+        # add winners to winner collection
+        race_ids = await get_orders_without_estimated_winner(hours=12)
+        for race_id in race_ids:
+            winner = get_winner(race_id)
+            if not winner:
+                log.warning("No winner found")
+                continue
+            log.debug(f'Winner: {winner}')
+            await asyncio.sleep(.1)
+            await insert_winner({'market_id': race_id, 'winner': winner, 'timestamp': datetime.utcnow()})
+        
+        # calculate hypothetical payoff
         winners_df, orders_list = await get_data_for_hypothetical_payoff()
 
         # calculate hypothetical payoffs, depending on oder type lay or back and whether the horse won or not
         for order in orders_list:
             try:
+                log.debug(f"Processing historical order: {order['market_id']}")
                 winners = winners_df[winners_df['market_id']
                                     == order['market_id']]['winner'].values[0]
             except (IndexError, KeyError):
+                log.debug(f"No winner found for {order['market_id']}")
                 continue   # nothing in the database
             if order['selection_id'] in winners:
                 if order['side'] == 'BACK':
@@ -364,6 +381,7 @@ async def hypothetical_payoff_calc():
                     order['outcome_estimate'] = 'WON'
 
             # save hypothetical payoffs to mongodb
+            log.debug(f'Updating estimates profits in orders database')
             await update_estimated_profit(order)
 
         await asyncio.sleep(234)
@@ -378,7 +396,7 @@ def get_winner(market_id):
         pass # market is still open
     elif market_book[0]['status'] == 'CLOSED':
         winners = [runner.selection_id for runner in market_book[0]['runners'] if runner['status'] == 'WINNER']
-        log.info(f"The winning selection is:  {winners}")
+        # log.info(f"The winning selection is:  {winners}")
         return winners
 
 

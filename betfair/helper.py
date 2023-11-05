@@ -131,6 +131,8 @@ def init_logger(screenlevel, filename=None, logdir=None, modulename=''):
             logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s'))
         info_handler.setFormatter(
             logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s'))
+        stream_handler.setFormatter(
+            logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s'))
 
         # root.addHandler(fh)
         root.addHandler(file_handler2)
@@ -139,7 +141,7 @@ def init_logger(screenlevel, filename=None, logdir=None, modulename=''):
 
     # screen output formatter
     stream_handler.setFormatter(
-        logging.Formatter('%(levelname)s - %(message)s'))
+        logging.Formatter('%(asctime)s - %(levelname)s - %(levelname)s - %(message)s'))
     root.addHandler(stream_handler)
 
     mainlogger = logging.getLogger(modulename)
