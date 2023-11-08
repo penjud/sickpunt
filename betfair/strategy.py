@@ -55,7 +55,7 @@ class StrategyHandler:
                 active = strategy.get('active', 'off')
                 price_max_value = strategy.get('priceMaxValue', 1000)
                 price_min_value = strategy.get('priceMinValue', 1.01)
-                strategy_market_type = strategy.get('marketType', 'WIN')
+                strategy_market_type = strategy.get('market_type', 'WIN')
                 harness_selection = strategy.get('harnessSelection', 'any')
                 strategy_event_type = strategy.get('selectedSportType', 'Horse Racing').lower()
 
