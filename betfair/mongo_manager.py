@@ -75,7 +75,9 @@ async def get_data_for_hypothetical_payoff():
     # Async function to load placed bets that contains available_market_ids
     # TODO: only load the ones that have no estimated_profit or estimated_outcome
     cursor = orders_collection.find(
-        {'market_id': {'$in': available_market_ids}},
+        {'market_id': {'$in': available_market_ids},
+          'profit_estimate': {'$exists': False},
+         },
         {'_id': False}
     )
     orders_list = await cursor.to_list(length=None)
@@ -105,5 +107,11 @@ async def get_orders_without_estimated_winner(hours):
     return market_ids
 
 
-async def insert_winner(data):
-    await winner_collection.insert_one(data)
+async def insert_winner(data, filter_dict):
+    # TODO: ensure winner collection has market_id as index
+    update_result = await winner_collection.update_one(
+        filter_dict,
+        {'$set': data},
+        upsert=True
+    )
+    return update_result

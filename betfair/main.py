@@ -348,13 +348,18 @@ async def hypothetical_payoff_calc():
                 log.warning("No winner found")
                 continue
             log.debug(f'Winner: {winner}')
-            await insert_winner({'market_id': race_id, 'winner': winner, 'timestamp': datetime.utcnow()})
+            await insert_winner(
+                {'market_id': race_id, 'winner': winner, 'timestamp': datetime.utcnow()},
+                {'market_id': race_id}
+                )
         
         # calculate hypothetical payoff
         winners_df, orders_list = await get_data_for_hypothetical_payoff()
 
         # calculate hypothetical payoffs, depending on oder type lay or back and whether the horse won or not
         for order in orders_list:
+            if len(orders_list) > 100:
+                log.warning(f'Large number of orders to process estimated profit: {len(orders_list)}')
             try:
                 log.debug(f"Processing historical order: {order['market_id']}")
                 winners = winners_df[winners_df['market_id']
